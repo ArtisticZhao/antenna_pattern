@@ -444,14 +444,14 @@
             <item>
              <widget class="QLineEdit" name="com_port">
               <property name="text">
-               <string>COM3</string>
+               <string>COM1</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="com_connect">
               <property name="text">
-               <string>3-连接</string>
+               <string>2-连接</string>
               </property>
              </widget>
             </item>
@@ -502,7 +502,7 @@
             <item>
              <widget class="QPushButton" name="set_pitch">
               <property name="text">
-               <string>4-设置俯仰</string>
+               <string>3-设置俯仰</string>
               </property>
              </widget>
             </item>
@@ -766,7 +766,7 @@
         <item>
          <widget class="QPushButton" name="start_test">
           <property name="text">
-           <string>5-开始</string>
+           <string>4-开始</string>
           </property>
          </widget>
         </item>

@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "rotatorprotocol.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -13,6 +14,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     connect(&telnet, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(on_state_changed(QAbstractSocket::SocketState)));
     connect(&telnet, SIGNAL(newData(const char*,int)), this, SLOT(add_n9918a_log(const char*,int)));
+
+    timerRead = new QTimer(this);
+    timerRead->setInterval(100);
+    connect(timerRead, SIGNAL(timeout()), this, SLOT(com_read_data()));
 }
 
 MainWindow::~MainWindow()
@@ -53,7 +58,29 @@ void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
             set_status_text("disconnected", "");
             ui->lan_connect->setText("断开");
             break;
+    }
+}
 
+void MainWindow::com_read_data()
+{
+    if (com->bytesAvailable() <= 0) {
+        return;
+    }
+    QByteArray data = com->readAll();
+
+    int dataLen = data.length();
+    if (dataLen <= 0) {
+        return;
+    }
+    int header = data.indexOf(0xaa);
+    if (header == 0){
+        // 发现帧头, 解析角度
+        char pitch[2] = {data[8], data[7]};
+        QByteArray pitch_a = QByteArray(pitch, 2);
+        QDataStream dataStream(pitch_a);
+        qint16 pitch_int;
+        dataStream >> pitch_int;
+        ui->current_pitch->setText(QString::number(((double)pitch_int)/100));
     }
 }
 
@@ -133,6 +160,13 @@ void MainWindow::measure_power()
     send_cmd_9918a("TRACE:DATA?");
 }
 
+void MainWindow::send_cmd_rotator(const QByteArray &cmd)
+{
+    if (comOk){
+        com->write(cmd);
+    }
+}
+
 void MainWindow::on_start_test_clicked()
 {
     init_n9918a();
@@ -144,5 +178,54 @@ void MainWindow::on_start_test_clicked()
 void MainWindow::on_n9918_log_textChanged()
 {
     ui->n9918_log->moveCursor(QTextCursor::End);
+}
+
+
+void MainWindow::on_com_connect_clicked()
+{
+    if (!comOk){
+        // 初始化串口
+        com = new QextSerialPort(ui->com_port->text(), QextSerialPort::Polling);
+        comOk = com->open(QIODevice::ReadWrite);
+        if (comOk) {
+            //清空缓冲区
+            com->flush();
+            //设置波特率
+            com->setBaudRate(BAUD115200);
+            //设置数据位
+            com->setDataBits(DATA_8);
+            //设置校验位
+            com->setParity(PAR_NONE);
+            //设置停止位
+            com->setStopBits(STOP_1);
+            com->setFlowControl(FLOW_OFF);
+            com->setTimeout(10);
+            ui->com_connect->setText("断开");
+            set_status_text("", "connected");
+            //读取数据
+            timerRead->start();
+        }
+    }else{
+        // 断开串口
+        timerRead->stop();
+        com->close();
+        com->deleteLater();
+        ui->com_connect->setText("2-连接");
+        set_status_text("", "disconnected");
+        comOk = false;
+    }
+
+}
+
+
+
+
+void MainWindow::on_set_pitch_clicked()
+{
+    RotatorProtocol rp;
+    double pitch = ui->pitch->text().toDouble();
+    rp.set_target_angle(0, (int)(pitch*100), PITCH);
+    qDebug()<< rp.get_bitstring();
+    send_cmd_rotator(rp.get_bitstring());
 }
 

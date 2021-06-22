@@ -23,22 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     timerRead->setInterval(100);
     connect(timerRead, SIGNAL(timeout()), this, SLOT(com_read_data()));
 
-    // 列出可用串口
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-    {
-        qDebug() << "Name        : " << info.portName();
-        qDebug() << "Description : " << info.description();
-        qDebug() << "Manufacturer: " << info.manufacturer();
-
-//        // Example use QSerialPort
-//        QSerialPort serial;
-//        serial.setPort(info);
-//        if (serial.open(QIODevice::ReadWrite))
-//        {
-//            ui->comboBox->addItem(info.portName());
-//            serial.close();
-//        }
-    }
+    refresh_cmd_port_list();
 
 }
 
@@ -57,8 +42,7 @@ void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
             set_status_text("disconnected", "");
             ui->lan_connect->setText("1-连接");
             ui->start_test->setEnabled(false);
-            set_n9918_config_enable(true);
-
+            ui->ip_addr->setEnabled(true);
             break;
         case QAbstractSocket::HostLookupState:
             set_status_text("connecting", "");
@@ -71,8 +55,7 @@ void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
         case QAbstractSocket::ConnectedState:
             set_status_text("connected", "");
             ui->lan_connect->setText("断开");
-            ui->com_connect->setEnabled(true);
-            set_n9918_config_enable(false);
+            ui->ip_addr->setEnabled(false);
             break;
         case QAbstractSocket::BoundState:
             set_status_text("connected", "");
@@ -223,6 +206,18 @@ void MainWindow::measure_power()
     ui->peek_freq->setText(QString::number(max_index));
 }
 
+void MainWindow::refresh_cmd_port_list()
+{
+    ui->cb_com_port->clear();
+    // 列出可用串口
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+    {
+        ui->cb_com_port->addItem(info.portName());
+    }
+
+
+}
+
 void MainWindow::send_cmd_rotator(const QByteArray &cmd)
 {
     if (comOk){
@@ -278,12 +273,10 @@ QString MainWindow::select_save_file()
 void MainWindow::set_n9918_config_enable(bool enable)
 {
     if (enable){
-        ui->ip_addr->setEnabled(true);
         ui->start_freq->setEnabled(true);
         ui->stop_freq->setEnabled(true);
         ui->sample_points->setEnabled(true);
     }else{
-        ui->ip_addr->setEnabled(false);
         ui->start_freq->setEnabled(false);
         ui->stop_freq->setEnabled(false);
         ui->sample_points->setEnabled(false);
@@ -305,23 +298,38 @@ void MainWindow::set_rotator_config_enable(bool enable)
     }
 }
 
+void MainWindow::on_process_enable(bool enable)
+{
+    if (enable){
+        // 禁用
+        on_process = true;
+        set_n9918_config_enable(false);
+        set_rotator_config_enable(false);
+        ui->start_test->setEnabled(false);
+        ui->com_connect->setEnabled(false);
+        ui->lan_connect->setEnabled(false);
+        ui->set_pitch->setEnabled(false);
+    }else {
+        // 启用
+        on_process = false;
+        ui->start_test->setEnabled(true);
+        ui->com_connect->setEnabled(true);
+        ui->lan_connect->setEnabled(true);
+        ui->set_pitch->setEnabled(true);
+        set_n9918_config_enable(true);
+        set_rotator_config_enable(true);
+    }
+}
+
 void MainWindow::on_start_test_clicked()
 {
-    set_rotator_config_enable(false);
-    ui->start_test->setEnabled(false);
-    ui->com_connect->setEnabled(false);
-    ui->lan_connect->setEnabled(false);
-    ui->set_pitch->setEnabled(false);
+    on_process_enable(true);
 
     // 选择文件保存路径
     QString filename = select_save_file();
     if(filename.length()==0){
         // 用户取消选择
-        ui->start_test->setEnabled(true);
-        ui->com_connect->setEnabled(true);
-        ui->lan_connect->setEnabled(true);
-        ui->set_pitch->setEnabled(true);
-        set_rotator_config_enable(true);
+        on_process_enable(false);
         return;
     }
     QFile file(filename);
@@ -337,6 +345,13 @@ void MainWindow::on_start_test_clicked()
     //如果文件不存在会自动创建文件
     if(!file.open(QIODevice::ReadWrite)){
         qDebug()<<"打开失败";
+        QMessageBox messageBox(QMessageBox::Warning,
+                               "打开失败", "打开文件失败，请重新开始",
+                               QMessageBox::Yes , NULL);
+        messageBox.exec();
+
+        on_process_enable(false);
+        return;
     }else{
         qDebug()<<"打开成功";
     }
@@ -357,8 +372,8 @@ void MainWindow::on_start_test_clicked()
         ui->progressBar->setValue((int)(((double)move_count)/movement*100));
         turn_rotator(set_azimuth);
         if(kill_process){
-            ui->start_test->setEnabled(true);
             kill_process = false;
+            on_process_enable(false);
             return;
         }
 
@@ -380,12 +395,8 @@ void MainWindow::on_start_test_clicked()
     file.close();
 
     ui->progressBar->setValue(100);
+    on_process_enable(false);
 
-    ui->start_test->setEnabled(true);
-    ui->com_connect->setEnabled(true);
-    ui->lan_connect->setEnabled(true);
-    ui->set_pitch->setEnabled(true);
-    set_rotator_config_enable(true);
 }
 
 
@@ -399,7 +410,7 @@ void MainWindow::on_com_connect_clicked()
 {
     if (!comOk){
         // 初始化串口
-        com = new QextSerialPort(ui->com_port->text(), QextSerialPort::Polling);
+        com = new QextSerialPort(ui->cb_com_port->currentText(), QextSerialPort::Polling);
         comOk = com->open(QIODevice::ReadWrite);
         if (comOk) {
             //清空缓冲区
@@ -416,7 +427,8 @@ void MainWindow::on_com_connect_clicked()
             com->setTimeout(10);
             ui->com_connect->setText("断开");
             set_status_text("", "connected");
-            ui->com_port->setEnabled(false);
+            ui->cb_com_port->setEnabled(false);
+            ui->btn_refresh_com->setEnabled(false);
 
             //读取数据
             timerRead->start();
@@ -431,10 +443,10 @@ void MainWindow::on_com_connect_clicked()
         com->deleteLater();
         ui->set_pitch->setEnabled(false);
         ui->start_test->setEnabled(false);
-        ui->com_port->setEnabled(true);
+        ui->cb_com_port->setEnabled(true);
+        ui->btn_refresh_com->setEnabled(true);
         ui->com_connect->setText("2-连接");
         set_status_text("", "disconnected");
-
     }
 }
 
@@ -465,10 +477,16 @@ void MainWindow::on_stop_test_clicked()
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     //当文档内容被修改时.
-    if (ui->start_test->isEnabled()){
+    if (!on_process){
         event->accept();
     }else{
         event->ignore();
     }
+}
+
+
+void MainWindow::on_btn_refresh_com_clicked()
+{
+    refresh_cmd_port_list();
 }
 

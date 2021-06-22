@@ -32,6 +32,7 @@ private:
     void measure_power();
 
     // 转台相关函数
+    void refresh_cmd_port_list();
     void send_cmd_rotator(const QByteArray &cmd);
     void turn_rotator(double azimuth);
 
@@ -41,6 +42,7 @@ private:
     // 防呆
     void set_n9918_config_enable(bool enable);
     void set_rotator_config_enable(bool enable);
+    void on_process_enable(bool enable);    // 当测试程序开始 结束时 改变一些界面的状态
 
 
 
@@ -54,6 +56,8 @@ private slots:
     void on_set_pitch_clicked();
     void on_rotator_log_textChanged();
     void on_stop_test_clicked();
+
+    void on_btn_refresh_com_clicked();
 
 public slots:
     void add_n9918a_log(const char *msg, int count);
@@ -69,6 +73,8 @@ private:
     QextSerialPort *com;        //串口通信对象
     QTimer *timerRead;          //定时读取串口数据
     bool kill_process = false;
+
+    bool on_process =false;             // 测试中
 
 };
 #endif // MAINWINDOW_H

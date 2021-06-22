@@ -349,7 +349,6 @@ void MainWindow::on_start_test_clicked()
                                "打开失败", "打开文件失败，请重新开始",
                                QMessageBox::Yes , NULL);
         messageBox.exec();
-
         on_process_enable(false);
         return;
     }else{

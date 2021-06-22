@@ -23,8 +23,8 @@ HEADERS += \
 FORMS += \
     mainwindow.ui
 
-INCLUDEPATH += $$PWD/../3rd_qextserialport
-include ($$PWD/../3rd_qextserialport/3rd_qextserialport.pri)
+INCLUDEPATH += $$PWD/3rd_qextserialport
+include ($$PWD/3rd_qextserialport/3rd_qextserialport.pri)
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

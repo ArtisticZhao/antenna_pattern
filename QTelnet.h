@@ -6,7 +6,7 @@
 #include <qsize.h>
 #include <QString>
 
-#define IncommingBufferSize	(1500)
+#define IncommingBufferSize	(15000)
 
 class QTelnet : public QTcpSocket
 {

@@ -277,7 +277,7 @@
                </size>
               </property>
               <property name="text">
-               <string>当前频点</string>
+               <string>峰值频率</string>
               </property>
              </widget>
             </item>
@@ -296,7 +296,7 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="current_freq">
+             <widget class="QLineEdit" name="peek_freq">
               <property name="enabled">
                <bool>true</bool>
               </property>
@@ -450,6 +450,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="com_connect">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>2-连接</string>
               </property>
@@ -501,6 +504,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="set_pitch">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>3-设置俯仰</string>
               </property>
@@ -765,6 +771,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="start_test">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>4-开始</string>
           </property>

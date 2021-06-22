@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QCloseEvent>
 #include "QTelnet.h"
 #include "qextserialport.h"
 
@@ -18,6 +19,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    //这是一个虚函数，继承自QEvent.只要重写了这个虚函数，当你按下窗口右上角的"×"时，就会调用你所重写的此函数.
+    void closeEvent(QCloseEvent*event);
+
 private:
     void set_status_text(const QString &n9918a, const QString &rotator);  // 设置底部状态栏
 
@@ -28,20 +33,27 @@ private:
 
     // 转台相关函数
     void send_cmd_rotator(const QByteArray &cmd);
+    void turn_rotator(double azimuth);
+
+    // file
+    QString select_save_file();
+
+    // 防呆
+    void set_n9918_config_enable(bool enable);
+    void set_rotator_config_enable(bool enable);
+
 
 
 private slots:
     void on_lan_connect_clicked();
     void on_state_changed(QAbstractSocket::SocketState s);
     void com_read_data();
-
     void on_start_test_clicked();
-
     void on_n9918_log_textChanged();
-
     void on_com_connect_clicked();
-
     void on_set_pitch_clicked();
+    void on_rotator_log_textChanged();
+    void on_stop_test_clicked();
 
 public slots:
     void add_n9918a_log(const char *msg, int count);
@@ -51,10 +63,12 @@ private:
     QTelnet telnet;
     QString status_n9918a, status_rotator;
     bool cmd_lock;  // 命令锁，如果命令是带有？查询语句，需要等待结果返回
+    QString last_9918_anser;
 
     bool comOk = false;                 //串口是否打开
     QextSerialPort *com;        //串口通信对象
     QTimer *timerRead;          //定时读取串口数据
+    bool kill_process = false;
 
 };
 #endif // MAINWINDOW_H

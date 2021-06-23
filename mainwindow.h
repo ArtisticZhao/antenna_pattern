@@ -1,9 +1,13 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QTimer>
 #include <QCloseEvent>
+#include <qwt_plot_curve.h>
+#include <qwt_plot_grid.h>
+#include <qwt_polar_plot.h>
+#include <qwt_polar_grid.h>
 #include "QTelnet.h"
 #include "qextserialport.h"
 
@@ -30,6 +34,8 @@ private:
     void init_n9918a();
     void send_cmd_9918a(const QString &cmd);
     void measure_power();
+    void freq_linespace();
+    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
 
     // 转台相关函数
     void refresh_cmd_port_list();
@@ -68,6 +74,8 @@ private:
     QString status_n9918a, status_rotator;
     bool cmd_lock;  // 命令锁，如果命令是带有？查询语句，需要等待结果返回
     QString last_9918_anser;
+    QVector<double>* xaxis;    // 保存频谱数据的
+    QwtPolarPlot plot;
 
     bool comOk = false;                 //串口是否打开
     QextSerialPort *com;        //串口通信对象

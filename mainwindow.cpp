@@ -1,4 +1,4 @@
-#include <cmath>
+﻿#include <cmath>
 #include<QThread>
 #include<QFileDialog>
 #include <QSerialPortInfo>
@@ -24,6 +24,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timerRead, SIGNAL(timeout()), this, SLOT(com_read_data()));
 
     refresh_cmd_port_list();
+    xaxis = new QVector<double>();
+
+    // 添加方向图控件
+
 
 }
 
@@ -40,34 +44,34 @@ void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
         {
         case QAbstractSocket::UnconnectedState:
             set_status_text("disconnected", "");
-            ui->lan_connect->setText("1-连接");
+            ui->lan_connect->setText(QStringLiteral("1-连接"));
             ui->start_test->setEnabled(false);
             ui->ip_addr->setEnabled(true);
             break;
         case QAbstractSocket::HostLookupState:
             set_status_text("connecting", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             break;
         case QAbstractSocket::ConnectingState:
             set_status_text("connecting", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             break;
         case QAbstractSocket::ConnectedState:
             set_status_text("connected", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             ui->ip_addr->setEnabled(false);
             break;
         case QAbstractSocket::BoundState:
             set_status_text("connected", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             break;
         case QAbstractSocket::ListeningState:
             set_status_text("connected", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             break;
         case QAbstractSocket::ClosingState:
             set_status_text("disconnected", "");
-            ui->lan_connect->setText("断开");
+            ui->lan_connect->setText(QStringLiteral("断开"));
             break;
     }
 }
@@ -128,10 +132,10 @@ void MainWindow::on_lan_connect_clicked()
 {
     if (! telnet.isConnected()){
         telnet.connectToHost(ui->ip_addr->text(), 5025);
-        ui->lan_connect->setText("断开");
+        ui->lan_connect->setText(QStringLiteral("断开"));
     }else{
         telnet.disconnectFromHost();
-        ui->lan_connect->setText("1-连接");
+        ui->lan_connect->setText(QStringLiteral("1-连接"));
     }
 
 }
@@ -189,8 +193,10 @@ void MainWindow::measure_power()
     int max_index = -1;
     double min = 1e100;
     int index = -1;
+    QVector<double> ydata;
     foreach(QString num, list){
         double temp = num.toDouble();
+        ydata.push_back(temp);
         index ++;
         if (max < temp){
             max = temp;
@@ -204,6 +210,45 @@ void MainWindow::measure_power()
     ui->power_max->setText(QString::number(max));
     ui->power_min->setText(QString::number(min));
     ui->peek_freq->setText(QString::number(max_index));
+
+    draw_spectrum(xaxis, &ydata);
+}
+
+void MainWindow::freq_linespace()
+{
+    if(xaxis->length()!=0){
+        xaxis->clear();
+    }
+
+    double start_freq = ui->start_freq->text().toDouble();
+    double stop_freq = ui->stop_freq->text().toDouble();
+    int sample_points = ui->sample_points->text().toInt();
+    xaxis = new QVector<double>();
+    double step_freq = (stop_freq - start_freq)/sample_points;
+    for (int i=0; i<sample_points; i++) {
+        xaxis->push_back(start_freq + i*step_freq);
+    }
+}
+
+void MainWindow::draw_spectrum(QVector<double> *xaxis, QVector<double> *spectrum_data)
+{
+    ui->qwt_spectrum->detachItems();
+
+    //增加网格
+    QwtPlotGrid *grid = new QwtPlotGrid;
+    grid->setPen(QPen(Qt::gray, 0, Qt::DotLine));
+    grid->attach(ui->qwt_spectrum);
+    QwtPlotCurve *pCurve=new QwtPlotCurve("curve1");
+    pCurve->setSamples(*xaxis,*spectrum_data);
+    pCurve->attach(ui->qwt_spectrum);
+    //设置曲线颜色
+    QPen pen;
+    pen.setColor(QColor(0,0,255));
+    pCurve->setPen(pen);
+    //QwtPlotCurve::PaintAttribute
+    //抗锯齿
+    pCurve->setRenderHint(QwtPlotItem::RenderAntialiased,true);
+    ui->qwt_spectrum->replot();
 }
 
 void MainWindow::refresh_cmd_port_list()
@@ -335,24 +380,24 @@ void MainWindow::on_start_test_clicked()
     QFile file(filename);
     //判断文件是否存在
     if(file.exists()){
-        qDebug()<<"文件已存在";
+        qDebug()<<QStringLiteral("文件已存在");
         QFile fileTemp(filename);
         fileTemp.remove();
     }else{
-        qDebug()<<"文件不存在";
+        qDebug()<<QStringLiteral("文件不存在");  //
     }
     //已读写方式打开文件，
     //如果文件不存在会自动创建文件
     if(!file.open(QIODevice::ReadWrite)){
         qDebug()<<"打开失败";
         QMessageBox messageBox(QMessageBox::Warning,
-                               "打开失败", "打开文件失败，请重新开始",
+                               QStringLiteral("打开失败"), QStringLiteral("打开文件失败，请重新开始"),
                                QMessageBox::Yes , NULL);
         messageBox.exec();
         on_process_enable(false);
         return;
     }else{
-        qDebug()<<"打开成功";
+        qDebug()<<QStringLiteral("打开成功");
     }
     // 写入表头
     QString content("set pitch, current pitch, set azimuth, current azimuth, data(dBm)\n");
@@ -360,6 +405,7 @@ void MainWindow::on_start_test_clicked()
 
     ui->progressBar->setValue(0);
     init_n9918a();
+    freq_linespace();
 
     double start_azimuth = ui->start_azimuth->text().toDouble();
     double stop_azimuth = ui->stop_azimuth->text().toDouble();
@@ -424,7 +470,7 @@ void MainWindow::on_com_connect_clicked()
             com->setStopBits(STOP_1);
             com->setFlowControl(FLOW_OFF);
             com->setTimeout(10);
-            ui->com_connect->setText("断开");
+            ui->com_connect->setText(QStringLiteral("断开"));
             set_status_text("", "connected");
             ui->cb_com_port->setEnabled(false);
             ui->btn_refresh_com->setEnabled(false);
@@ -444,7 +490,7 @@ void MainWindow::on_com_connect_clicked()
         ui->start_test->setEnabled(false);
         ui->cb_com_port->setEnabled(true);
         ui->btn_refresh_com->setEnabled(true);
-        ui->com_connect->setText("2-连接");
+        ui->com_connect->setText(QStringLiteral("2-连接"));
         set_status_text("", "disconnected");
     }
 }

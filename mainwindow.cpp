@@ -59,7 +59,9 @@ MainWindow::MainWindow(QWidget *parent)
 //    grid.attach(&plot);
 //    plot.resize(800,600);
 //    plot.show();
-
+    c = new QChart();
+    pattern_data = new QSplineSeries();
+    chart = new QPolarChart();
 }
 
 MainWindow::~MainWindow()
@@ -224,11 +226,13 @@ void MainWindow::measure_power()
     int max_index = -1;
     double min = 1e100;
     int index = -1;
-    QVector<double> ydata;
+
+    QLineSeries *lineseries = new QLineSeries();  //频谱的数据集
+
     foreach(QString num, list){
-        double temp = num.toDouble();
-        ydata.push_back(temp);
         index ++;
+        double temp = num.toDouble();
+        lineseries->append(xaxis->at(index), temp);
         if (max < temp){
             max = temp;
             max_index = index;
@@ -242,7 +246,26 @@ void MainWindow::measure_power()
     ui->power_min->setText(QString::number(min));
     ui->peek_freq->setText(QString::number(max_index));
 
-//    draw_spectrum(xaxis, &ydata);
+    // 绘制当前频谱
+    c = new QChart();
+    c->legend()->hide();
+    c->addSeries(lineseries);
+    c->createDefaultAxes();
+    ui->spectrum->setChart(c);
+
+    // 添加测量点到方向图
+    pattern_data->append(ui->current_azimuth->text().toDouble(), max);
+
+    chart = new QPolarChart();
+    chart->legend()->hide();
+    chart->addSeries(pattern_data);
+
+    chart->createDefaultAxes();
+    QList<QAbstractAxis *> axisList = chart->axes();
+    axisList.at(0)->setRange(0,360);
+
+    ui->pattern->setChart(chart);
+
 }
 
 void MainWindow::freq_linespace()
@@ -260,62 +283,6 @@ void MainWindow::freq_linespace()
         xaxis->push_back(start_freq + i*step_freq);
     }
 }
-
-//void MainWindow::draw_spectrum(QVector<double> *xaxis, QVector<double> *spectrum_data)
-//{
-//    ui->qwt_spectrum->detachItems();
-
-//    //增加网格
-//    QwtPlotGrid *grid = new QwtPlotGrid;
-//    grid->setPen(QPen(Qt::gray, 0, Qt::DotLine));
-//    grid->attach(ui->qwt_spectrum);
-//    QwtPlotCurve *pCurve=new QwtPlotCurve("curve1");
-//    pCurve->setSamples(*xaxis,*spectrum_data);
-//    pCurve->attach(ui->qwt_spectrum);
-//    //设置曲线颜色
-//    QPen pen;
-//    pen.setColor(QColor(0,0,255));
-//    pCurve->setPen(pen);
-//    //QwtPlotCurve::PaintAttribute
-//    //抗锯齿
-//    pCurve->setRenderHint(QwtPlotItem::RenderAntialiased,true);
-//    ui->qwt_spectrum->replot();
-//}
-
-//class MyData: public QwtSeriesData< QwtPointPolar >
-//{
-//    virtual size_t size() const
-//    {
-//        return 360;
-//    }
-//    virtual QwtPointPolar sample(size_t i) const
-//    {
-//        double theta;
-//        double r;
-//        theta = i / 180.0 * M_PI;
-//        r = 2.0 * (1 - cos(theta));
-//        return QwtPointPolar(i, r);
-//    }
-//    virtual QRectF boundingRect() const
-//    {
-//        //return qwtBoundingRect();
-//        return QRectF(-2.0, -2.0, 4, 4);
-//    }
-//};
-
-
-//void MainWindow::draw_pattern()
-//{
-//    QwtPolarCurve curve;
-//            curve.setPen (QPen(Qt::green, 3));
-
-////    pattern =
-//            MyData data;
-//                curve.setData (&data);
-//                curve.attach(&plot);
-//      plot.replot();
-////    curve.setData();
-//}
 
 void MainWindow::refresh_cmd_port_list()
 {
@@ -338,8 +305,6 @@ void MainWindow::send_cmd_rotator(const QByteArray &cmd)
 
 void MainWindow::turn_rotator(double azimuth)
 {
-    qDebug() << "turn to " << azimuth;
-    qDebug() << ui->current_azimuth->text().toDouble();
     RotatorProtocol rp;
     rp.set_target_angle((int)(azimuth*100), 0, AZIMUTH);
     send_cmd_rotator(rp.get_bitstring());
@@ -420,6 +385,8 @@ void MainWindow::on_process_enable(bool enable)
         ui->com_connect->setEnabled(false);
         ui->lan_connect->setEnabled(false);
         ui->set_pitch->setEnabled(false);
+        ui->pb_set_azimuth->setEnabled(false);
+        ui->le_azimuth->setEnabled(false);
     }else {
         // 启用
         on_process = false;
@@ -427,6 +394,8 @@ void MainWindow::on_process_enable(bool enable)
         ui->com_connect->setEnabled(true);
         ui->lan_connect->setEnabled(true);
         ui->set_pitch->setEnabled(true);
+        ui->pb_set_azimuth->setEnabled(true);
+        ui->le_azimuth->setEnabled(true);
         set_n9918_config_enable(true);
         set_rotator_config_enable(true);
     }
@@ -446,16 +415,13 @@ void MainWindow::on_start_test_clicked()
     QFile file(filename);
     //判断文件是否存在
     if(file.exists()){
-        qDebug()<<QStringLiteral("文件已存在");
         QFile fileTemp(filename);
         fileTemp.remove();
     }else{
-        qDebug()<<QStringLiteral("文件不存在");  //
     }
     //已读写方式打开文件，
     //如果文件不存在会自动创建文件
     if(!file.open(QIODevice::ReadWrite)){
-        qDebug()<<"打开失败";
         QMessageBox messageBox(QMessageBox::Warning,
                                QStringLiteral("打开失败"), QStringLiteral("打开文件失败，请重新开始"),
                                QMessageBox::Yes , NULL);
@@ -463,7 +429,6 @@ void MainWindow::on_start_test_clicked()
         on_process_enable(false);
         return;
     }else{
-        qDebug()<<QStringLiteral("打开成功");
     }
     // 写入表头
     QString content("set pitch, current pitch, set azimuth, current azimuth, data(dBm)\n");
@@ -472,6 +437,10 @@ void MainWindow::on_start_test_clicked()
     ui->progressBar->setValue(0);
     init_n9918a();
     freq_linespace();
+    QSplineSeries* old_data = pattern_data;
+
+    pattern_data = new QSplineSeries();
+    old_data->deleteLater();                  // 删掉旧的方向图数据
 
     double start_azimuth = ui->start_azimuth->text().toDouble();
     double stop_azimuth = ui->stop_azimuth->text().toDouble();
@@ -482,6 +451,8 @@ void MainWindow::on_start_test_clicked()
     for (; move_count<movement; move_count++ ) {
         ui->progressBar->setValue((int)(((double)move_count)/movement*100));
         turn_rotator(set_azimuth);
+        // Debug
+        ui->current_azimuth->setText(QString::number(set_azimuth));
         if(kill_process){
             kill_process = false;
             on_process_enable(false);
@@ -507,7 +478,6 @@ void MainWindow::on_start_test_clicked()
 
     ui->progressBar->setValue(100);
     on_process_enable(false);
-
 }
 
 
@@ -544,7 +514,7 @@ void MainWindow::on_com_connect_clicked()
             //读取数据
             timerRead->start();
             ui->set_pitch->setEnabled(true);
-            ui->start_test->setEnabled(true);
+            ui->pb_set_azimuth->setEnabled(true);
         }
     }else{
         // 断开串口
@@ -553,6 +523,7 @@ void MainWindow::on_com_connect_clicked()
         com->close();
         com->deleteLater();
         ui->set_pitch->setEnabled(false);
+        ui->pb_set_azimuth->setEnabled(false);
         ui->start_test->setEnabled(false);
         ui->cb_com_port->setEnabled(true);
         ui->btn_refresh_com->setEnabled(true);
@@ -583,7 +554,6 @@ void MainWindow::on_rotator_log_textChanged()
 void MainWindow::on_stop_test_clicked()
 {
     kill_process = true;
-//    draw_pattern();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)

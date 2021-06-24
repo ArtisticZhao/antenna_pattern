@@ -4,12 +4,12 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QCloseEvent>
-//#include <qwt/qwt_plot_curve.h>
-//#include <qwt/qwt_plot_grid.h>
-//#include <qwtpolar/qwt_polar_plot.h>
+#include <QtCharts>
+
 #include "QTelnet.h"
 #include "qextserialport.h"
-//#include "plot.h"
+
+QT_CHARTS_USE_NAMESPACE
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -73,14 +73,17 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
-//    QwtPolarPlot plot;
     QTelnet telnet;
     QString status_n9918a, status_rotator;
     bool cmd_lock;  // 命令锁，如果命令是带有？查询语句，需要等待结果返回
     QString last_9918_anser;
     QVector<double>* xaxis;    // 保存频谱数据的
-//    Plot *d_plot;
-//    QwtSeriesData<QwtPointPolar> *pattern;
+
+    // 绘图相关
+    QChart *c;
+    QPolarChart *chart;
+    QSplineSeries *pattern_data;
+
 
     bool comOk = false;                 //串口是否打开
     QextSerialPort *com;        //串口通信对象

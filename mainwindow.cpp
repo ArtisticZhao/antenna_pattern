@@ -4,9 +4,14 @@
 #include <QSerialPortInfo>
 #include <QStandardPaths>
 #include <QMessageBox>
+
+//#include <qwt_polar_curve.h>
+//#include <qwt_series_data.h>
+//#include <qwt_polar_grid.h>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "rotatorprotocol.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,7 +32,33 @@ MainWindow::MainWindow(QWidget *parent)
     xaxis = new QVector<double>();
 
     // 添加方向图控件
+//    d_plot = new Plot( this );
+//    ui->verticalLayout_5->addWidget(d_plot);
+////    d_plot->showGrid(false);
 
+//    //
+//    plot.setPlotBackground (QBrush( Qt::red, Qt::SolidPattern ));
+//    plot.setScale( QwtPolar::ScaleAzimuth, 0, 360, 30);
+//    plot.setScale( QwtPolar::ScaleRadius, 0, 4, 2);
+
+//    QwtPolarGrid grid;
+//    grid.setFont (QFont("Times", 12, QFont::Bold));
+//    grid.setPen ( QPen(Qt::blue, 1, Qt::DashDotLine) );
+//    //grid.setAxisFont (QwtPolar::AxisLeft,  QFont("Times", 6));
+//    grid.setAxisPen ( QwtPolar::AxisAzimuth, QPen(Qt::black, 1) );
+//    //grid.setAxisPen ( QwtPolar::AxisLeft, QPen(Qt::black, 1) );
+//    grid.showMinorGrid (QwtPolar::AxisLeft, true);
+//    grid.showMinorGrid (QwtPolar::AxisRight, true);
+//    grid.showMinorGrid (QwtPolar::AxisTop, true);
+//    grid.showMinorGrid (QwtPolar::AxisBottom, true);
+//    grid.showGrid (QwtPolar::AxisAzimuth, true);
+//    grid.showGrid (QwtPolar::AxisLeft, true);
+//    grid.showGrid (QwtPolar::AxisRight, true);
+//    grid.showGrid (QwtPolar::AxisTop, true);
+//    grid.showGrid (QwtPolar::AxisBottom, true);
+//    grid.attach(&plot);
+//    plot.resize(800,600);
+//    plot.show();
 
 }
 
@@ -211,7 +242,7 @@ void MainWindow::measure_power()
     ui->power_min->setText(QString::number(min));
     ui->peek_freq->setText(QString::number(max_index));
 
-    draw_spectrum(xaxis, &ydata);
+//    draw_spectrum(xaxis, &ydata);
 }
 
 void MainWindow::freq_linespace()
@@ -230,26 +261,61 @@ void MainWindow::freq_linespace()
     }
 }
 
-void MainWindow::draw_spectrum(QVector<double> *xaxis, QVector<double> *spectrum_data)
-{
-    ui->qwt_spectrum->detachItems();
+//void MainWindow::draw_spectrum(QVector<double> *xaxis, QVector<double> *spectrum_data)
+//{
+//    ui->qwt_spectrum->detachItems();
 
-    //增加网格
-    QwtPlotGrid *grid = new QwtPlotGrid;
-    grid->setPen(QPen(Qt::gray, 0, Qt::DotLine));
-    grid->attach(ui->qwt_spectrum);
-    QwtPlotCurve *pCurve=new QwtPlotCurve("curve1");
-    pCurve->setSamples(*xaxis,*spectrum_data);
-    pCurve->attach(ui->qwt_spectrum);
-    //设置曲线颜色
-    QPen pen;
-    pen.setColor(QColor(0,0,255));
-    pCurve->setPen(pen);
-    //QwtPlotCurve::PaintAttribute
-    //抗锯齿
-    pCurve->setRenderHint(QwtPlotItem::RenderAntialiased,true);
-    ui->qwt_spectrum->replot();
-}
+//    //增加网格
+//    QwtPlotGrid *grid = new QwtPlotGrid;
+//    grid->setPen(QPen(Qt::gray, 0, Qt::DotLine));
+//    grid->attach(ui->qwt_spectrum);
+//    QwtPlotCurve *pCurve=new QwtPlotCurve("curve1");
+//    pCurve->setSamples(*xaxis,*spectrum_data);
+//    pCurve->attach(ui->qwt_spectrum);
+//    //设置曲线颜色
+//    QPen pen;
+//    pen.setColor(QColor(0,0,255));
+//    pCurve->setPen(pen);
+//    //QwtPlotCurve::PaintAttribute
+//    //抗锯齿
+//    pCurve->setRenderHint(QwtPlotItem::RenderAntialiased,true);
+//    ui->qwt_spectrum->replot();
+//}
+
+//class MyData: public QwtSeriesData< QwtPointPolar >
+//{
+//    virtual size_t size() const
+//    {
+//        return 360;
+//    }
+//    virtual QwtPointPolar sample(size_t i) const
+//    {
+//        double theta;
+//        double r;
+//        theta = i / 180.0 * M_PI;
+//        r = 2.0 * (1 - cos(theta));
+//        return QwtPointPolar(i, r);
+//    }
+//    virtual QRectF boundingRect() const
+//    {
+//        //return qwtBoundingRect();
+//        return QRectF(-2.0, -2.0, 4, 4);
+//    }
+//};
+
+
+//void MainWindow::draw_pattern()
+//{
+//    QwtPolarCurve curve;
+//            curve.setPen (QPen(Qt::green, 3));
+
+////    pattern =
+//            MyData data;
+//                curve.setData (&data);
+//                curve.attach(&plot);
+//      plot.replot();
+////    curve.setData();
+//}
 
 void MainWindow::refresh_cmd_port_list()
 {
@@ -517,6 +583,7 @@ void MainWindow::on_rotator_log_textChanged()
 void MainWindow::on_stop_test_clicked()
 {
     kill_process = true;
+//    draw_pattern();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -533,5 +600,14 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::on_btn_refresh_com_clicked()
 {
     refresh_cmd_port_list();
+}
+
+
+void MainWindow::on_pb_set_azimuth_clicked()
+{
+    RotatorProtocol rp;
+    double azimuth = ui->le_azimuth->text().toDouble();
+    rp.set_target_angle((int)(azimuth*100), 0, AZIMUTH);
+    send_cmd_rotator(rp.get_bitstring());
 }
 

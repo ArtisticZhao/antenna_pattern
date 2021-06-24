@@ -4,12 +4,12 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QCloseEvent>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_grid.h>
-#include <qwt_polar_plot.h>
-#include <qwt_polar_grid.h>
+//#include <qwt/qwt_plot_curve.h>
+//#include <qwt/qwt_plot_grid.h>
+//#include <qwtpolar/qwt_polar_plot.h>
 #include "QTelnet.h"
 #include "qextserialport.h"
+//#include "plot.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -35,7 +35,8 @@ private:
     void send_cmd_9918a(const QString &cmd);
     void measure_power();
     void freq_linespace();
-    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
+//    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
+//    void draw_pattern();
 
     // 转台相关函数
     void refresh_cmd_port_list();
@@ -65,17 +66,21 @@ private slots:
 
     void on_btn_refresh_com_clicked();
 
+    void on_pb_set_azimuth_clicked();
+
 public slots:
     void add_n9918a_log(const char *msg, int count);
 
 private:
     Ui::MainWindow *ui;
+//    QwtPolarPlot plot;
     QTelnet telnet;
     QString status_n9918a, status_rotator;
     bool cmd_lock;  // 命令锁，如果命令是带有？查询语句，需要等待结果返回
     QString last_9918_anser;
     QVector<double>* xaxis;    // 保存频谱数据的
-    QwtPolarPlot plot;
+//    Plot *d_plot;
+//    QwtSeriesData<QwtPointPolar> *pattern;
 
     bool comOk = false;                 //串口是否打开
     QextSerialPort *com;        //串口通信对象

@@ -24,9 +24,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&telnet, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(on_state_changed(QAbstractSocket::SocketState)));
     connect(&telnet, SIGNAL(newData(const char*,int)), this, SLOT(add_n9918a_log(const char*,int)));
 
+    // 初始化读串口定时器
     timerRead = new QTimer(this);
     timerRead->setInterval(100);
     connect(timerRead, SIGNAL(timeout()), this, SLOT(com_read_data()));
+
+    timerReadMotor = new QTimer(this);
+    timerReadMotor->setInterval(100);
+    connect(timerReadMotor, SIGNAL(timeout()), this, SLOT(on_motor_com_read_data()));
+
 
     refresh_cmd_port_list();
     xaxis = new QVector<double>();
@@ -253,8 +259,18 @@ void MainWindow::measure_power()
     c->createDefaultAxes();
     ui->spectrum->setChart(c);
 
+    draw_pattern(max);
+
+
+}
+
+void MainWindow::draw_pattern(double max){
     // 添加测量点到方向图
-    pattern_data->append(ui->current_azimuth->text().toDouble(), max);
+    if (ui->tabWidget->currentIndex() == 0){
+        pattern_data->append(ui->current_azimuth->text().toDouble(), max);
+    }else{
+        pattern_data->append(ui->le_current_angle->text().toDouble(), max);
+    }
 
     chart = new QPolarChart();
     chart->legend()->hide();
@@ -265,7 +281,6 @@ void MainWindow::measure_power()
     axisList.at(0)->setRange(0,360);
 
     ui->pattern->setChart(chart);
-
 }
 
 void MainWindow::freq_linespace()
@@ -286,14 +301,21 @@ void MainWindow::freq_linespace()
 
 void MainWindow::refresh_cmd_port_list()
 {
-    ui->cb_com_port->clear();
-    // 列出可用串口
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-    {
-        ui->cb_com_port->addItem(info.portName());
+    if (ui->tabWidget->currentIndex() == 0){
+        ui->cb_com_port->clear();
+        // 列出可用串口
+        foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+        {
+            ui->cb_com_port->addItem(info.portName());
+        }
+    }else if(ui->tabWidget->currentIndex() == 1){
+        ui->cb_com_port_motor->clear();
+        // 列出可用串口
+        foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+        {
+            ui->cb_com_port_motor->addItem(info.portName());
+        }
     }
-
-
 }
 
 void MainWindow::send_cmd_rotator(const QByteArray &cmd)
@@ -302,6 +324,37 @@ void MainWindow::send_cmd_rotator(const QByteArray &cmd)
         com->write(cmd);
     }
 }
+
+void MainWindow::send_cmd_motor(const QByteArray &cmd)
+{
+    if (motor_comOk){
+        motorOk = false;
+        motor_com->write(cmd);
+    }
+    int timeout = 100;
+    // waiting for reply
+    while(!motorOk){
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+        timeout --;
+        if (timeout == 0){
+            qDebug()<<"motor timeout!";
+            break;
+        }
+        QThread::msleep(50);
+    }
+}
+
+void MainWindow::turn_motor(double angle)
+{
+    double d_angle = angle*100;
+    if(d_angle < 0){
+        send_cmd_motor( QString("cmd %1 0").arg((int)(-d_angle)).toUtf8() );
+    }else{
+        send_cmd_motor( QString("cmd %1 1").arg((int)(d_angle)).toUtf8() );
+    }
+}
+
+
 
 void MainWindow::turn_rotator(double azimuth)
 {
@@ -401,6 +454,7 @@ void MainWindow::on_process_enable(bool enable)
     }
 }
 
+
 void MainWindow::on_start_test_clicked()
 {
     on_process_enable(true);
@@ -430,6 +484,51 @@ void MainWindow::on_start_test_clicked()
         return;
     }else{
     }
+
+    if( ui->tabWidget->currentIndex() == 1){
+        // 天线极化测试
+        // 写入表头
+        QString content("current angle, data(dBm)\n");
+        file.write(content.toUtf8(),content.length());
+        ui->progressBar->setValue(0);
+        init_n9918a();
+        freq_linespace();
+        QSplineSeries* old_data = pattern_data;
+
+        pattern_data = new QSplineSeries();
+        old_data->deleteLater();                  // 删掉旧的方向图数据
+
+        double step_angle = ui->le_step_angle->text().toDouble();
+        double total_angle = ui->le_total_angle->text().toDouble();
+        int movement = (int)(total_angle/step_angle);
+        int move_count = 0;
+        double current_angle = 0;
+        ui->le_current_angle->setText(QString::number(current_angle));
+        for (; move_count<movement; move_count++ ) {
+            ui->progressBar->setValue((int)(((double)move_count)/movement*100));
+            // save data to csv
+            measure_power();
+            content = QString("%1, %2\n").arg(current_angle).arg(last_9918_anser);
+            file.write(content.toUtf8(),content.length());
+
+            turn_motor(step_angle);
+            current_angle += step_angle;
+            ui->le_current_angle->setText(QString::number(current_angle));
+            if(kill_process){
+                kill_process = false;
+                on_process_enable(false);
+                file.close();
+                return;
+            }
+        }
+
+        file.close();
+
+        ui->progressBar->setValue(100);
+        on_process_enable(false);
+        return;
+    }
+
     // 写入表头
     QString content("set pitch, current pitch, set azimuth, current azimuth, data(dBm)\n");
     file.write(content.toUtf8(),content.length());
@@ -456,6 +555,7 @@ void MainWindow::on_start_test_clicked()
         if(kill_process){
             kill_process = false;
             on_process_enable(false);
+            file.close();
             return;
         }
 
@@ -579,5 +679,80 @@ void MainWindow::on_pb_set_azimuth_clicked()
     double azimuth = ui->le_azimuth->text().toDouble();
     rp.set_target_angle((int)(azimuth*100), 0, AZIMUTH);
     send_cmd_rotator(rp.get_bitstring());
+}
+
+
+void MainWindow::on_btn_refresh_com_motor_clicked()
+{
+    refresh_cmd_port_list();
+}
+
+
+void MainWindow::on_com_connect_motor_clicked()
+{
+    if (!motor_comOk){
+        // 初始化串口
+        motor_com = new QextSerialPort(ui->cb_com_port_motor->currentText(), QextSerialPort::Polling);
+        motor_comOk = motor_com->open(QIODevice::ReadWrite);
+        if (motor_comOk) {
+            //清空缓冲区
+            motor_com->flush();
+            //设置波特率
+            motor_com->setBaudRate(BAUD9600);
+            //设置数据位
+            motor_com->setDataBits(DATA_8);
+            //设置校验位
+            motor_com->setParity(PAR_NONE);
+            //设置停止位
+            motor_com->setStopBits(STOP_1);
+            motor_com->setFlowControl(FLOW_OFF);
+            motor_com->setTimeout(10);
+            ui->com_connect_motor->setText(QStringLiteral("断开"));
+            ui->cb_com_port_motor->setEnabled(false);
+            ui->btn_refresh_com_motor->setEnabled(false);
+
+            //读取数据
+            timerReadMotor->start();
+//            ui->set_pitch->setEnabled(true);
+//            ui->pb_set_azimuth->setEnabled(true);
+            ui->start_test->setEnabled(true);
+
+        }
+    }else{
+        // 断开串口
+        timerReadMotor->stop();
+        motor_comOk = false;
+        motor_com->close();
+        motor_com->deleteLater();
+        ui->com_connect_motor->setText(QStringLiteral("2-连接"));
+        ui->cb_com_port_motor->setEnabled(true);
+        ui->btn_refresh_com_motor->setEnabled(true);
+    }
+}
+
+void MainWindow::on_motor_com_read_data()
+{
+    if (motor_com->bytesAvailable() <= 0) {
+        return;
+    }
+    QByteArray data = motor_com->readAll();
+    int dataLen = data.length();
+    if (dataLen <= 0) {
+        return;
+    }
+    int header = data.indexOf('O');
+    if (header >= 0){
+        motorOk = true;
+        qDebug()<< "motor ok";
+    }
+    qDebug()<<data;
+
+}
+
+
+void MainWindow::on_pb_turn_motor_clicked()
+{
+    QString angle = ui->le_motor_angle->text();
+    turn_motor(angle.toDouble());
 }
 

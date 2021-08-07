@@ -36,12 +36,19 @@ private:
     void measure_power();
     void freq_linespace();
 //    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
-//    void draw_pattern();
+    void draw_pattern(double max);
 
     // 转台相关函数
     void refresh_cmd_port_list();
     void send_cmd_rotator(const QByteArray &cmd);
     void turn_rotator(double azimuth);
+
+    // motor
+    void send_cmd_motor(const QByteArray &cmd);
+    void turn_motor(double angle);
+
+    // test
+    void test_polar();
 
     // file
     QString select_save_file();
@@ -54,19 +61,33 @@ private:
 
 
 private slots:
+    // 9918A
     void on_lan_connect_clicked();
     void on_state_changed(QAbstractSocket::SocketState s);
-    void com_read_data();
-    void on_start_test_clicked();
     void on_n9918_log_textChanged();
+
+
+    // rotator
     void on_com_connect_clicked();
-    void on_set_pitch_clicked();
+    void on_btn_refresh_com_clicked();
+    void com_read_data();
     void on_rotator_log_textChanged();
+
+    void on_set_pitch_clicked();
+    void on_pb_set_azimuth_clicked();
+
+
+    // motor
+    void on_com_connect_motor_clicked();
+    void on_motor_com_read_data();
+    void on_btn_refresh_com_motor_clicked();
+    void on_pb_turn_motor_clicked();
+
+
+    // test
+    void on_start_test_clicked();
     void on_stop_test_clicked();
 
-    void on_btn_refresh_com_clicked();
-
-    void on_pb_set_azimuth_clicked();
 
 public slots:
     void add_n9918a_log(const char *msg, int count);
@@ -84,12 +105,19 @@ private:
     QPolarChart *chart;
     QSplineSeries *pattern_data;
 
-
-    bool comOk = false;                 //串口是否打开
+    // rotator
+    bool comOk = false;         //串口是否打开
     QextSerialPort *com;        //串口通信对象
     QTimer *timerRead;          //定时读取串口数据
-    bool kill_process = false;
 
+    // motor
+    bool motor_comOk = false;         //串口是否打开
+    QextSerialPort *motor_com;        //串口通信对象
+    QTimer *timerReadMotor;          //定时读取串口数据
+    bool motorOk;
+
+    // test
+    bool kill_process = false;
     bool on_process =false;             // 测试中
 
 };

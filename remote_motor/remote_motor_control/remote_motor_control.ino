@@ -1,51 +1,68 @@
+/**
+ * 协议版本： v2.0
+ * 协议内容： 
+ *          1. 控制器保存绝对角度
+ *          2. 控制器每500ms 回报一次当前角度 格式为 Angle: 9000, 代表当前角度为90°
+ *          3. 控制器输入绝对角度 格式为 cmd 9000, 代表命令控制器旋转到绝对角度90.0° 
+ */
+
 #define DIR 8
 #define PULSE 9
+#include <MsTimer2.h>
+int current_angle;
+void report_angle(){
+  Serial.print("Angle: ");
+  Serial.print(current_angle);
+  Serial.print("\n");
+}
 void setup() {
   // put your setup code here, to run once:
   pinMode(PULSE, OUTPUT);
   pinMode(DIR, OUTPUT);
   digitalWrite(PULSE, LOW);
   digitalWrite(DIR, LOW);
+  current_angle = 0;
+  
+  MsTimer2::set(500, report_angle);        // 中断设置函数，每 500ms 进入一次中断
+  MsTimer2::start();                //开始计时
 
   // set serial port
   Serial.begin(115200);
-  Serial.print("\n");
-  Serial.print("Usage: cmd <angle*100> <direction>\n");
-  Serial.print("e.g.: Turn 90 degress clockwise # cmd 9000 0\n");
-  Serial.print("\n");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   while(Serial.available()){
     String str = Serial.readString();
-    Serial.print(str);
-    String str_angle = getValue(str, ' ', 1);
-    int angle = str_angle.toInt();
-    String str_dir = getValue(str, ' ', 2);
-    int dir = str_dir.toInt();
-    Serial.print("angle: ");
-    Serial.print(angle);
-    Serial.print(" ");
-    Serial.print("dir: ");
-    Serial.print(dir);
-    Serial.print("\n");
-    
-    ratote(angle, dir);
-    Serial.print("OK\n");
+    if (str.equals("rst")){
+      current_angle = 0;
+    }else{
+      String str_angle = getValue(str, ' ', 1);
+      int angle = str_angle.toInt();
+      int d_angle = angle - current_angle;
+      if (d_angle > 0){
+        ratote(d_angle, 1);
+      }else if(d_angle < 0){
+        ratote(-d_angle, 0);
+      }
+    }
   }
 }
 
 void ratote(int angle, int dir){
+  MsTimer2::stop();
   int r_times = angle / 72;
   if (dir == 1) {
     digitalWrite(DIR, LOW);
+    current_angle += angle;
   }else {
     digitalWrite(DIR, HIGH);
+    current_angle -= angle;
   }
   for (int i=0; i<r_times; i++){
     step(2);
   }
+  MsTimer2::start();
 }
 
 void step(int d_time){

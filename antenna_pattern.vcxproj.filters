@@ -55,14 +55,17 @@
     <ClCompile Include="rotatorprotocol.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="N9918a.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="Rotator.cpp">
-      <Filter>Generated Files</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="N9918a.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PolarMotor.cpp">
-      <Filter>Generated Files</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QComboBoxMoreSignal.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +87,12 @@
     <ClInclude Include="rotatorprotocol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <QtMoc Include="QComboBoxMoreSignal.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="PolarMotor.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -100,13 +109,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="N9918a.h">
-      <Filter>Generated Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rotator.h">
-      <Filter>Generated Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PolarMotor.h">
-      <Filter>Generated Files</Filter>
+    <ClInclude Include="logging.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

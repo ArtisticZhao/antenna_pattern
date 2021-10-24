@@ -7,7 +7,7 @@
 #include <QtCharts>
 #include <QTelnet.h>
 
-using namespace QtCharts;
+QT_CHARTS_USE_NAMESPACE
 
 class N9918a : public QObject{
 public:

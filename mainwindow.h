@@ -6,8 +6,13 @@
 #include <QCloseEvent>
 #include <QtCharts>
 
-
 #include "qextserialport.h"
+
+#include "N9918a.h"
+#include "PolarMotor.h"
+#include "Rotator.h"
+#include "QComboBoxMoreSignal.h"
+#include "logging.h"
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -33,13 +38,6 @@ public:
 //    // 9918相关函数
 ////    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
 //    void draw_pattern(double max);
-//
-//    // 转台相关函数
-//    void refresh_cmd_port_list();
-//
-//
-//    // motor
-//    
 //
 //
 //    // file
@@ -77,8 +75,9 @@ public:
 private:
     Ui::MainWindow *ui;
     
-    QString status_rotator;
-    
+    N9918a* n9918a;
+    PolarMotor* polar_motor;
+    Rotator* rotator;
     
 
     // 绘图相关
@@ -86,15 +85,21 @@ private:
     QPolarChart *chart;
     QSplineSeries *pattern_data;
 
-    // rotator
-   
-    
-
-    // motor
-
     // test
     bool kill_process = false;
     bool on_process =false;             // 测试中
 
+    // functions
+
+// 事件响应
+private slots:
+    void on_logging(LOGLEVEL level, QString msg);
+    void on_cb_com_showPopup(QComboBoxMoreSignal* combo_box);
+
+    void on_pb_polar_motor_connect_clicked();
+    void on_pb_polar_motor_set_angle_clicked();
+    void on_pb_polar_motor_reset_angle_clicked();
+    void on_polar_motor_status_changed();
+    void on_polar_motor_angle_updated(double angle);
 };
 #endif // MAINWINDOW_H

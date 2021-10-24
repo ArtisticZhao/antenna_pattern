@@ -159,7 +159,7 @@
       <IgnoreImportLibrary>true</IgnoreImportLibrary>
       <OutputFile>$(OutDir)\antenna_pattern.exe</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
     <Midl>
@@ -187,6 +187,7 @@
   <ItemGroup>
     <ClCompile Include="N9918a.cpp" />
     <ClCompile Include="PolarMotor.cpp" />
+    <ClCompile Include="QComboBoxMoreSignal.cpp" />
     <ClCompile Include="QTelnet.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
@@ -206,8 +207,10 @@
     </QtMoc>
     <ClInclude Include="3rd_qextserialport\qextserialport_global.h" />
     <ClInclude Include="3rd_qextserialport\qextserialport_p.h" />
+    <ClInclude Include="logging.h" />
     <ClInclude Include="N9918a.h" />
-    <ClInclude Include="PolarMotor.h" />
+    <QtMoc Include="PolarMotor.h" />
+    <QtMoc Include="QComboBoxMoreSignal.h" />
     <ClInclude Include="Rotator.h" />
     <ClInclude Include="rotatorprotocol.h" />
   </ItemGroup>

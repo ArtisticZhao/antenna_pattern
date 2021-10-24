@@ -340,10 +340,13 @@
             </property>
             <layout class="QGridLayout" name="gridLayout">
              <item row="1" column="1">
-              <widget class="QComboBox" name="cb_polar_motor_com"/>
+              <widget class="QComboBoxMoreSignal" name="cb_polar_motor_com"/>
              </item>
              <item row="2" column="2">
               <widget class="QPushButton" name="pb_polar_motor_set_angle">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -370,7 +373,7 @@
               </layout>
              </item>
              <item row="1" column="2">
-              <widget class="QPushButton" name="pb__polar_motor_connect">
+              <widget class="QPushButton" name="pb_polar_motor_connect">
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -486,6 +489,9 @@
              </item>
              <item row="4" column="2">
               <widget class="QPushButton" name="pb_polar_motor_reset_angle">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -599,7 +605,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QComboBox" name="cb_rotator_com"/>
+              <widget class="QComboBoxMoreSignal" name="cb_rotator_com"/>
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="pb_rotator_connect">
@@ -1057,6 +1063,11 @@
    <extends>QWidget</extends>
    <header location="global">QChartView</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QComboBoxMoreSignal</class>
+   <extends>QComboBox</extends>
+   <header location="global">QComboBoxMoreSignal.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

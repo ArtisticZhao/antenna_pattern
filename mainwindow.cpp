@@ -15,8 +15,17 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    
-   /* refresh_cmd_port_list();*/
+    n9918a = nullptr;
+    polar_motor = new PolarMotor();
+    rotator = new Rotator();
+
+    // 创建信号连接
+    connect(ui->cb_polar_motor_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
+    connect(ui->cb_rotator_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
+
+    connect(polar_motor, SIGNAL(polor_motor_status_changed()), this, SLOT(on_polar_motor_status_changed()));
+    connect(polar_motor, SIGNAL(polor_motor_update_angle(double)), this, SLOT(on_polar_motor_angle_updated(double)));
+    connect(polar_motor, SIGNAL(polar_motor_logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
 
 //    //
 //    plot.setPlotBackground (QBrush( Qt::red, Qt::SolidPattern ));
@@ -48,8 +57,78 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-
+    delete n9918a;
+    delete polar_motor;
+    delete rotator;
     delete ui;
+}
+
+void MainWindow::on_logging(LOGLEVEL level, QString msg) {
+	QDateTime current_date_time = QDateTime::currentDateTime();
+	QString current_date = current_date_time.toString("hh:mm:ss.zzz");
+
+    switch (level) {
+    case INFO:
+        ui->textEdit_log->append(QString("%1: [INFO] %2").arg(current_date).arg(msg));
+        break;
+    case WARNNING:
+        ui->textEdit_log->append(QString("<font color=\"#FF9912\">%1: [WARNNING] %2</font> ").arg(current_date).arg(msg));
+        break;
+    case LOG_ERROR:
+        ui->textEdit_log->append(QString("<font color=\"#FF0000\">%1: [ERROR] %2</font> ").arg(current_date).arg(msg));
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::on_cb_com_showPopup(QComboBoxMoreSignal* combo_box) {
+	combo_box->clear();
+
+	// 列出可用串口
+	foreach(const QSerialPortInfo & info, QSerialPortInfo::availablePorts()) {
+		combo_box->addItem(info.portName());
+	}
+}
+
+void MainWindow::on_pb_polar_motor_connect_clicked() {
+    qDebug() << "on polar motor connect" << polar_motor->comOk;
+    if (!polar_motor->comOk) {
+        polar_motor->polar_motor_connect(ui->cb_polar_motor_com->currentText());
+    }
+    else {
+        polar_motor->polar_motor_disconnect();
+    }
+    
+}
+
+void MainWindow::on_pb_polar_motor_set_angle_clicked() {
+    qDebug() << "on polar motor set angle";
+    polar_motor->polar_motor_turn(ui->le_polar_motor_cmd_angle->text().toDouble());
+}
+
+void MainWindow::on_pb_polar_motor_reset_angle_clicked() {
+    polar_motor->polar_motor_reset();
+}
+
+void MainWindow::on_polar_motor_status_changed() {
+    qDebug() << "on polar motor status changed" << polar_motor->comOk;
+    if (polar_motor->comOk) {
+        ui->pb_polar_motor_connect->setText(QStringLiteral("断开"));
+        ui->cb_polar_motor_com->setEnabled(false);
+        ui->pb_polar_motor_reset_angle->setEnabled(true);
+        ui->pb_polar_motor_set_angle->setEnabled(true);
+    }
+    else {
+        ui->pb_polar_motor_connect->setText(QStringLiteral("连接"));
+        ui->cb_polar_motor_com->setEnabled(true);
+		ui->pb_polar_motor_reset_angle->setEnabled(false);
+		ui->pb_polar_motor_set_angle->setEnabled(false);
+    }
+}
+
+void MainWindow::on_polar_motor_angle_updated(double angle) {
+    ui->le_polar_motor_current_angle->setText(QString::number(angle));
 }
 
 //void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
@@ -185,24 +264,6 @@ MainWindow::~MainWindow()
 //    }
 //}
 
-//void MainWindow::refresh_cmd_port_list()
-//{
-//    if (ui->tabWidget->currentIndex() == 0){
-//        ui->cb_com_port->clear();
-//        // 列出可用串口
-//        foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-//        {
-//            ui->cb_com_port->addItem(info.portName());
-//        }
-//    }else if(ui->tabWidget->currentIndex() == 1){
-//        ui->cb_com_port_motor->clear();
-//        // 列出可用串口
-//        foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-//        {
-//            ui->cb_com_port_motor->addItem(info.portName());
-//        }
-//    }
-//}
 
 //QString MainWindow::select_save_file()
 //{
@@ -476,3 +537,5 @@ MainWindow::~MainWindow()
 //{
 //    QString angle = ui->le_motor_angle->text();
 //}
+
+

@@ -10,9 +10,9 @@ class PolarMotor : public QObject{
 	Q_OBJECT
 
 signals:
-	void polor_motor_status_changed();
-	void polor_motor_update_angle(double angle);
-	void polar_motor_logging(LOGLEVEL level, QString msg);
+	void status_changed();
+	void update_angle(double angle);
+	void logging(LOGLEVEL level, QString msg);
 
 
 public:
@@ -21,10 +21,10 @@ public:
 
 	PolarMotor();
 	~PolarMotor();
-	void polar_motor_connect(QString com);
-	void polar_motor_disconnect();
-	bool polar_motor_turn(double angle);
-	void polar_motor_reset();
+	void connectToCom(QString com);
+	void disconnect();
+	bool turn_to(double angle);
+	void reset_angle();
 
 
 private:
@@ -32,12 +32,12 @@ private:
 	QTimer* timerReadMotor;          // 定时读取串口数据
 	bool motor_cmd_lock;             // 命令结果等待
 
-	void polar_motor_send_cmd(const QByteArray& cmd);
-	bool polar_motor_wait_turn(double angle);
-	bool polar_motor_wait_reset();
+	void send_cmd(const QByteArray& cmd);
+	bool wait_turn(double angle);
+	bool wait_reset();
 
 
 private slots:
-	void on_polar_motor_read_data();
+	void read_data();
 };
 

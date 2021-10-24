@@ -553,6 +553,9 @@
              </item>
              <item row="2" column="2">
               <widget class="QPushButton" name="pb_rotator_set_pitch">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -593,6 +596,9 @@
              </item>
              <item row="3" column="2">
               <widget class="QPushButton" name="pb_rotator_set_azimuth">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>

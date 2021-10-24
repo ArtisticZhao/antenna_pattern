@@ -15,23 +15,32 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    n9918a = nullptr;
+    n9918a = new N9918a();
     polar_motor = new PolarMotor();
     rotator = new Rotator();
+    n9918a_status = "Disconnected";
+    polar_motor_status = "Disconnected";
+    rotator_status = "Disconnected";
 
     // 创建信号连接
     connect(ui->cb_polar_motor_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
     connect(ui->cb_rotator_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
 
-    connect(polar_motor, SIGNAL(polor_motor_status_changed()), this, SLOT(on_polar_motor_status_changed()));
-    connect(polar_motor, SIGNAL(polor_motor_update_angle(double)), this, SLOT(on_polar_motor_angle_updated(double)));
-    connect(polar_motor, SIGNAL(polar_motor_logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    connect(n9918a, SIGNAL(status_changed(DEV_STATUS)), this, SLOT(on_n9918a_status_updated(DEV_STATUS)));
+    connect(n9918a, SIGNAL(measure_updated(double, double, int)), this, SLOT(on_n9918a_measure_updated(double, double, int)));
+
+    connect(polar_motor, SIGNAL(status_changed()), this, SLOT(on_polar_motor_status_changed()));
+    connect(polar_motor, SIGNAL(update_angle(double)), this, SLOT(on_polar_motor_angle_updated(double)));
+    connect(polar_motor, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+
+    connect(rotator, SIGNAL(status_changed()), this, SLOT(on_rotator_status_changed()));
+    connect(rotator, SIGNAL(update_angle(double, double)), this, SLOT(on_rotator_angle_updated(double, double)));
+    connect(rotator, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
 
 //    //
 //    plot.setPlotBackground (QBrush( Qt::red, Qt::SolidPattern ));
 //    plot.setScale( QwtPolar::ScaleAzimuth, 0, 360, 30);
 //    plot.setScale( QwtPolar::ScaleRadius, 0, 4, 2);
-
 //    QwtPolarGrid grid;
 //    grid.setFont (QFont("Times", 12, QFont::Bold));
 //    grid.setPen ( QPen(Qt::blue, 1, Qt::DashDotLine) );
@@ -63,6 +72,23 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::statusBar_status(Module module, QString status) {
+    switch (module) {
+    case Module::N9918a:
+        n9918a_status = status;
+        break;
+    case Module::Rotator:
+        rotator_status = status;
+        break;
+    case Module::PolarMotor:
+        polar_motor_status = status;
+        break;
+    default:
+        break;
+    }
+    ui->statusbar->showMessage(QString("N9918A: %1 | Rotator: %2 | Polar Motor: %3").arg(n9918a_status).arg(rotator_status).arg(polar_motor_status));
+}
+
 void MainWindow::on_logging(LOGLEVEL level, QString msg) {
 	QDateTime current_date_time = QDateTime::currentDateTime();
 	QString current_date = current_date_time.toString("hh:mm:ss.zzz");
@@ -91,24 +117,68 @@ void MainWindow::on_cb_com_showPopup(QComboBoxMoreSignal* combo_box) {
 	}
 }
 
-void MainWindow::on_pb_polar_motor_connect_clicked() {
-    qDebug() << "on polar motor connect" << polar_motor->comOk;
-    if (!polar_motor->comOk) {
-        polar_motor->polar_motor_connect(ui->cb_polar_motor_com->currentText());
+void MainWindow::on_pb_n9918a_connect_clicked() {
+    if (n9918a->deviceOK == DISCONNECTED) {
+        n9918a->connectToN9918a(ui->le_n9918a_ip->text());
     }
     else {
-        polar_motor->polar_motor_disconnect();
+        n9918a->disconnect();
     }
-    
+}
+
+void MainWindow::on_n9918a_status_updated(DEV_STATUS deviceOK) {
+    switch (deviceOK) {
+    case DISCONNECTED:
+        ui->pb_n9918a_connect->setText(QStringLiteral("连接"));
+        ui->le_n9918a_ip->setEnabled(true);
+        ui->le_n9918a_start_freq->setEnabled(true);
+        ui->le_n9918a_stop_freq->setEnabled(true);
+        ui->le_n9918a_sample->setEnabled(true);
+        statusBar_status(Module::N9918a, "Disconnected");
+        break;
+    case CONNECTING:
+        ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
+		ui->le_n9918a_ip->setEnabled(false);
+		ui->le_n9918a_start_freq->setEnabled(false);
+		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_sample->setEnabled(false);
+        statusBar_status(Module::N9918a, "Connecting");
+        break;
+    case CONNECTED:
+        ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
+		ui->le_n9918a_ip->setEnabled(false);
+		ui->le_n9918a_start_freq->setEnabled(false);
+		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_sample->setEnabled(false);
+        statusBar_status(Module::N9918a, "Connected");
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::on_n9918a_measure_updated(double max_power, double min_power, int max_index) {
+    ui->le_n9918a_maxpower->setText(QString::number(max_power));
+    ui->le_n9918a_maxpower_freq->setText(QString::number(max_index));
+    ui->le_n9918a_minpower->setText(QString::number(min_power));
+}
+
+void MainWindow::on_pb_polar_motor_connect_clicked() {
+    if (!polar_motor->comOk) {
+        polar_motor->connectToCom(ui->cb_polar_motor_com->currentText());
+    }
+    else {
+        polar_motor->disconnect();
+    }
 }
 
 void MainWindow::on_pb_polar_motor_set_angle_clicked() {
     qDebug() << "on polar motor set angle";
-    polar_motor->polar_motor_turn(ui->le_polar_motor_cmd_angle->text().toDouble());
+    polar_motor->turn_to(ui->le_polar_motor_cmd_angle->text().toDouble());
 }
 
 void MainWindow::on_pb_polar_motor_reset_angle_clicked() {
-    polar_motor->polar_motor_reset();
+    polar_motor->reset_angle();
 }
 
 void MainWindow::on_polar_motor_status_changed() {
@@ -118,12 +188,14 @@ void MainWindow::on_polar_motor_status_changed() {
         ui->cb_polar_motor_com->setEnabled(false);
         ui->pb_polar_motor_reset_angle->setEnabled(true);
         ui->pb_polar_motor_set_angle->setEnabled(true);
+        statusBar_status(Module::PolarMotor, "Connected");
     }
     else {
         ui->pb_polar_motor_connect->setText(QStringLiteral("连接"));
         ui->cb_polar_motor_com->setEnabled(true);
 		ui->pb_polar_motor_reset_angle->setEnabled(false);
 		ui->pb_polar_motor_set_angle->setEnabled(false);
+        statusBar_status(Module::PolarMotor, "Disconnected");
     }
 }
 
@@ -131,78 +203,44 @@ void MainWindow::on_polar_motor_angle_updated(double angle) {
     ui->le_polar_motor_current_angle->setText(QString::number(angle));
 }
 
-//void MainWindow::on_state_changed(QAbstractSocket::SocketState s)
-//{
-//    switch( s )
-//        {
-//        case QAbstractSocket::UnconnectedState:
-//            set_status_text("disconnected", "");
-//            ui->lan_connect->setText(QStringLiteral("1-连接"));
-//            ui->start_test->setEnabled(false);
-//            ui->ip_addr->setEnabled(true);
-//            break;
-//        case QAbstractSocket::HostLookupState:
-//            set_status_text("connecting", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            break;
-//        case QAbstractSocket::ConnectingState:
-//            set_status_text("connecting", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            break;
-//        case QAbstractSocket::ConnectedState:
-//            set_status_text("connected", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            ui->ip_addr->setEnabled(false);
-//            break;
-//        case QAbstractSocket::BoundState:
-//            set_status_text("connected", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            break;
-//        case QAbstractSocket::ListeningState:
-//            set_status_text("connected", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            break;
-//        case QAbstractSocket::ClosingState:
-//            set_status_text("disconnected", "");
-//            ui->lan_connect->setText(QStringLiteral("断开"));
-//            break;
-//    }
-//}
+void MainWindow::on_pb_rotator_connect_clicked() {
+    if (!rotator->comOk) {
+        rotator->connectToCom(ui->cb_rotator_com->currentText());
+    }
+    else {
+        rotator->disconnect();
+    }
+}
 
-//void MainWindow::set_status_text(const QString &n9918a, const QString &rotator)
-//{
-//    if (n9918a.length()!=0){
-//        status_n9918a = n9918a;
-//    }
-//
-//    if (rotator.length()!=0){
-//        status_rotator = rotator;
-//    }
-//
-//    ui->statusbar->showMessage(QString("N9918A: %1 | Rotator: %2").arg(status_n9918a).arg(status_rotator));
-//
-//    // 改变 开始按钮状态
-//    if (telnet.isConnected() && comOk){
-//        ui->start_test->setEnabled(true);
-//    }else{
-//        ui->start_test->setEnabled(false);
-//    }
-//}
+void MainWindow::on_pb_rotator_set_pitch_clicked() {
+    rotator->set_pitch(ui->le_rotator_cmd_pitch->text().toDouble());
+}
 
+void MainWindow::on_pb_rotator_set_azimuth_clicked() {
+    rotator->set_azimuth(ui->le_rotator_cmd_azimuth->text().toDouble());
+}
 
-//void MainWindow::on_lan_connect_clicked()
-//{
-//    //if (! telnet.isConnected()){
-//    //    telnet.connectToHost(ui->ip_addr->text(), 5025);
-//    //    ui->lan_connect->setText(QStringLiteral("断开"));
-//    //}else{
-//    //    telnet.disconnectFromHost();
-//    //    ui->lan_connect->setText(QStringLiteral("1-连接"));
-//    //}
-//
-//}
+void MainWindow::on_rotator_status_changed() {
+    qDebug() << "on rotator status changed" << rotator->comOk;
+    if (rotator->comOk) {
+        ui->pb_rotator_connect->setText(QStringLiteral("断开"));
+		ui->cb_rotator_com->setEnabled(false);
+		ui->pb_rotator_set_pitch->setEnabled(true);
+		ui->pb_rotator_set_azimuth->setEnabled(true);
+        statusBar_status(Module::Rotator, "Connected");
+    } else {
+		ui->pb_rotator_connect->setText(QStringLiteral("连接"));
+		ui->cb_rotator_com->setEnabled(true);
+		ui->pb_rotator_set_pitch->setEnabled(false);
+		ui->pb_rotator_set_azimuth->setEnabled(false);
+        statusBar_status(Module::Rotator, "Disconnected");
+    }
+}
 
-
+void MainWindow::on_rotator_angle_updated(double pitch, double azimuth) {
+    ui->le_rotator_current_pitch->setText(QString::number(pitch));
+    ui->le_rotator_current_azimuth->setText(QString::number(azimuth));
+}
 
 
 
@@ -283,33 +321,9 @@ void MainWindow::on_polar_motor_angle_updated(double angle) {
 //    }
 //}
 
-//void MainWindow::set_n9918_config_enable(bool enable)
-//{
-//    if (enable){
-//        ui->start_freq->setEnabled(true);
-//        ui->stop_freq->setEnabled(true);
-//        ui->sample_points->setEnabled(true);
-//    }else{
-//        ui->start_freq->setEnabled(false);
-//        ui->stop_freq->setEnabled(false);
-//        ui->sample_points->setEnabled(false);
-//    }
-//}
 
-//void MainWindow::set_rotator_config_enable(bool enable) {
-//	/*if (enable) {
-//		ui->start_azimuth->setEnabled(true);
-//		ui->stop_azimuth->setEnabled(true);
-//		ui->step_azimuth->setEnabled(true);
-//		ui->pitch->setEnabled(true);
-//	}
-//	else {
-//		ui->start_azimuth->setEnabled(false);
-//		ui->stop_azimuth->setEnabled(false);
-//		ui->step_azimuth->setEnabled(false);
-//		ui->pitch->setEnabled(false);
-//	}*/
-//}
+
+
 
 //void MainWindow::on_process_enable(bool enable)
 //{

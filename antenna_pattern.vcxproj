@@ -208,10 +208,10 @@
     <ClInclude Include="3rd_qextserialport\qextserialport_global.h" />
     <ClInclude Include="3rd_qextserialport\qextserialport_p.h" />
     <ClInclude Include="logging.h" />
-    <ClInclude Include="N9918a.h" />
+    <QtMoc Include="N9918a.h" />
     <QtMoc Include="PolarMotor.h" />
     <QtMoc Include="QComboBoxMoreSignal.h" />
-    <ClInclude Include="Rotator.h" />
+    <QtMoc Include="Rotator.h" />
     <ClInclude Include="rotatorprotocol.h" />
   </ItemGroup>
   <ItemGroup>

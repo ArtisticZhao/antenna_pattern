@@ -93,6 +93,12 @@
     <QtMoc Include="PolarMotor.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="Rotator.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="N9918a.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -108,12 +114,6 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="N9918a.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Rotator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>

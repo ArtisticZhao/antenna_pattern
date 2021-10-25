@@ -185,6 +185,7 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Mission.cpp" />
     <ClCompile Include="N9918a.cpp" />
     <ClCompile Include="PolarMotor.cpp" />
     <ClCompile Include="QComboBoxMoreSignal.cpp" />
@@ -212,6 +213,7 @@
     <QtMoc Include="PolarMotor.h" />
     <QtMoc Include="QComboBoxMoreSignal.h" />
     <QtMoc Include="Rotator.h" />
+    <QtMoc Include="Mission.h" />
     <ClInclude Include="rotatorprotocol.h" />
   </ItemGroup>
   <ItemGroup>

@@ -23,6 +23,7 @@ public:
 	void connectToCom(QString com_port);
 	void disconnect();
 	void turn_to(double azimuth);
+	void turn_to_zero();
 	void set_pitch(double pitch);
 	void set_azimuth(double azimuth);
 
@@ -32,7 +33,7 @@ private:
 	QextSerialPort* com;        //串口通信对象
 	QTimer* timerRead;          //定时读取串口数据
 
-	void send_cmd(const QByteArray& cmd);
+	bool send_cmd(const QByteArray& cmd);
 
 
 private slots :

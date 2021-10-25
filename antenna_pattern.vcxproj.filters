@@ -67,6 +67,9 @@
     <ClCompile Include="QComboBoxMoreSignal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mission.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QTelnet.h">
@@ -97,6 +100,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="N9918a.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Mission.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

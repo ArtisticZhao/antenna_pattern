@@ -55,7 +55,8 @@ void Rotator::disconnect() {
 void Rotator::turn_to(double azimuth) {
 	RotatorProtocol rp;
 	rp.set_target_angle((int)(azimuth * 100), 0, AZIMUTH);
-	send_cmd(rp.get_bitstring());
+	bool res = send_cmd(rp.get_bitstring());
+	if (!res) return;
 	// wait rotator position
 	int timeout = 100;
 	double delta = azimuth - current_azimuth;
@@ -76,6 +77,11 @@ void Rotator::turn_to(double azimuth) {
 	emit logging(INFO, QString("turn to the position! %1\n").arg(current_azimuth));
 }
 
+void Rotator::turn_to_zero() {
+	// TODO: check the angle near 360!
+	set_azimuth(0);
+}
+
 void Rotator::set_pitch(double pitch) {
 	RotatorProtocol rp;
 	rp.set_target_angle(0, (int)(pitch * 100), PITCH);
@@ -88,9 +94,14 @@ void Rotator::set_azimuth(double azimuth) {
 	send_cmd(rp.get_bitstring());
 }
 
-void Rotator::send_cmd(const QByteArray& cmd) {
+bool Rotator::send_cmd(const QByteArray& cmd) {
 	if (comOk) {
 		com->write(cmd);
+		return true;
+	}
+	else {
+		emit logging(LOG_ERROR, "Rotator not ready!!!");
+		return false;
 	}
 }
 

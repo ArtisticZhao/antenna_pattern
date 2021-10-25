@@ -7,7 +7,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "rotatorprotocol.h"
+#include "Mission.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -25,9 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建信号连接
     connect(ui->cb_polar_motor_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
     connect(ui->cb_rotator_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
-
+    
     connect(n9918a, SIGNAL(status_changed(DEV_STATUS)), this, SLOT(on_n9918a_status_updated(DEV_STATUS)));
-    connect(n9918a, SIGNAL(measure_updated(double, double, int)), this, SLOT(on_n9918a_measure_updated(double, double, int)));
+    connect(n9918a, SIGNAL(measure_updated(double, double, double)), this, SLOT(on_n9918a_measure_updated(double, double, double)));
+    connect(n9918a, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
 
     connect(polar_motor, SIGNAL(status_changed()), this, SLOT(on_polar_motor_status_changed()));
     connect(polar_motor, SIGNAL(update_angle(double)), this, SLOT(on_polar_motor_angle_updated(double)));
@@ -36,32 +37,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(rotator, SIGNAL(status_changed()), this, SLOT(on_rotator_status_changed()));
     connect(rotator, SIGNAL(update_angle(double, double)), this, SLOT(on_rotator_angle_updated(double, double)));
     connect(rotator, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
-
-//    //
-//    plot.setPlotBackground (QBrush( Qt::red, Qt::SolidPattern ));
-//    plot.setScale( QwtPolar::ScaleAzimuth, 0, 360, 30);
-//    plot.setScale( QwtPolar::ScaleRadius, 0, 4, 2);
-//    QwtPolarGrid grid;
-//    grid.setFont (QFont("Times", 12, QFont::Bold));
-//    grid.setPen ( QPen(Qt::blue, 1, Qt::DashDotLine) );
-//    //grid.setAxisFont (QwtPolar::AxisLeft,  QFont("Times", 6));
-//    grid.setAxisPen ( QwtPolar::AxisAzimuth, QPen(Qt::black, 1) );
-//    //grid.setAxisPen ( QwtPolar::AxisLeft, QPen(Qt::black, 1) );
-//    grid.showMinorGrid (QwtPolar::AxisLeft, true);
-//    grid.showMinorGrid (QwtPolar::AxisRight, true);
-//    grid.showMinorGrid (QwtPolar::AxisTop, true);
-//    grid.showMinorGrid (QwtPolar::AxisBottom, true);
-//    grid.showGrid (QwtPolar::AxisAzimuth, true);
-//    grid.showGrid (QwtPolar::AxisLeft, true);
-//    grid.showGrid (QwtPolar::AxisRight, true);
-//    grid.showGrid (QwtPolar::AxisTop, true);
-//    grid.showGrid (QwtPolar::AxisBottom, true);
-//    grid.attach(&plot);
-//    plot.resize(800,600);
-//    plot.show();
-    c = new QChart();
-    pattern_data = new QSplineSeries();
-    chart = new QPolarChart();
 }
 
 MainWindow::~MainWindow()
@@ -89,6 +64,19 @@ void MainWindow::statusBar_status(Module module, QString status) {
     ui->statusbar->showMessage(QString("N9918A: %1 | Rotator: %2 | Polar Motor: %3").arg(n9918a_status).arg(rotator_status).arg(polar_motor_status));
 }
 
+QString MainWindow::select_save_file() {
+	QString fileName;
+    fileName = QFileDialog::getSaveFileName(this,
+            tr("Save file"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("CSV (*.csv)"));
+    if (!fileName.isNull()) {
+        //fileName是文件名
+        return fileName;
+    }else{
+        //点的是取消
+        return fileName;
+    }
+}
+
 void MainWindow::on_logging(LOGLEVEL level, QString msg) {
 	QDateTime current_date_time = QDateTime::currentDateTime();
 	QString current_date = current_date_time.toString("hh:mm:ss.zzz");
@@ -110,7 +98,6 @@ void MainWindow::on_logging(LOGLEVEL level, QString msg) {
 
 void MainWindow::on_cb_com_showPopup(QComboBoxMoreSignal* combo_box) {
 	combo_box->clear();
-
 	// 列出可用串口
 	foreach(const QSerialPortInfo & info, QSerialPortInfo::availablePorts()) {
 		combo_box->addItem(info.portName());
@@ -157,9 +144,9 @@ void MainWindow::on_n9918a_status_updated(DEV_STATUS deviceOK) {
     }
 }
 
-void MainWindow::on_n9918a_measure_updated(double max_power, double min_power, int max_index) {
+void MainWindow::on_n9918a_measure_updated(double max_power, double min_power, double max_freq) {
     ui->le_n9918a_maxpower->setText(QString::number(max_power));
-    ui->le_n9918a_maxpower_freq->setText(QString::number(max_index));
+    ui->le_n9918a_maxpower_freq->setText(QString::number(max_freq));
     ui->le_n9918a_minpower->setText(QString::number(min_power));
 }
 
@@ -242,88 +229,81 @@ void MainWindow::on_rotator_angle_updated(double pitch, double azimuth) {
     ui->le_rotator_current_azimuth->setText(QString::number(azimuth));
 }
 
+void MainWindow::on_checkBox_polar_motor_preconfig_enable_stateChanged() {
+    if (ui->checkBox_polar_motor_preconfig_enable->isChecked()) {
+        ui->le_polar_motor_preconfig_start_angle->setEnabled(true);
+        ui->le_polar_motor_preconfig_stop_angle->setEnabled(true);
+        ui->le_polar_motor_preconfig_step_angle->setEnabled(true);
+    }
+    else {
+		ui->le_polar_motor_preconfig_start_angle->setEnabled(false);
+		ui->le_polar_motor_preconfig_stop_angle->setEnabled(false);
+		ui->le_polar_motor_preconfig_step_angle->setEnabled(false);
+    }
+}
 
+void MainWindow::on_checkBox_rotator_preconfig_enable_stateChanged() {
+	if (ui->checkBox_rotator_preconfig_enable->isChecked()) {
+		ui->le_rotator_preconfig_start_angle->setEnabled(true);
+		ui->le_rotator_preconfig_stop_angle->setEnabled(true);
+		ui->le_rotator_preconfig_step_angle->setEnabled(true);
+	}
+	else {
+		ui->le_rotator_preconfig_start_angle->setEnabled(false);
+		ui->le_rotator_preconfig_stop_angle->setEnabled(false);
+		ui->le_rotator_preconfig_step_angle->setEnabled(false);
+	}
+}
 
+void MainWindow::on_pb_start_mission_clicked() {
+    QString file_full = select_save_file();
+	if (file_full.length() == 0) {
+		// 用户取消选择
+		return;
+	}
+    // Process file name
+    QFileInfo qfi = QFileInfo(file_full);
+    QString filename = qfi.completeBaseName();
+    QString filepath = qfi.absolutePath();
+    // Check file exist.
+	QStringList filters;
+	filters << QString("%1_*").arg(filename);
+    QDir dir(filepath);
+    QStringList dirs = dir.entryList(filters);
+	if (dirs.size() > 0) {
+		// file exist.
+		QMessageBox::StandardButton reply;
+		reply = QMessageBox::question(this, QStringLiteral("文件存在"), QStringLiteral("文件%1_*已经存在，是否覆盖?").arg(filename),
+			QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::No) return;
+	}
 
+    MissonType type;
+    if (ui->rb_patten->isChecked()) {
+        type = MissonType::RadiationPattern;
+    }else if (ui->rb_polar->isChecked()) {
+        type = MissonType::Polarization;
+    }
+    // Create mission
+    Mission mission(type,
+        ui->checkBox_polar_motor_preconfig_enable->isChecked(),
+        ui->le_polar_motor_preconfig_start_angle->text().toDouble(),
+        ui->le_polar_motor_preconfig_stop_angle->text().toDouble(),
+        ui->le_polar_motor_preconfig_step_angle->text().toDouble(),
 
+        ui->checkBox_rotator_preconfig_enable->isChecked(),
+		ui->le_rotator_preconfig_start_angle->text().toDouble(),
+		ui->le_rotator_preconfig_stop_angle->text().toDouble(),
+        ui->le_rotator_preconfig_step_angle->text().toDouble(),
 
+        n9918a, polar_motor, rotator
+        );
+    mission.set_pattern_widgets(ui->chart_spectrum, ui->chart_pattern);
+    connect(&mission, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_start_freq->text(), ui->le_n9918a_stop_freq->text());
 
-//void MainWindow::measure_power()
-//{
-//    
-//    ui->power_max->setText(QString::number(max));
-//    ui->power_min->setText(QString::number(min));
-//    ui->peek_freq->setText(QString::number(max_index));
-//
-//    // 绘制当前频谱
-//    c = new QChart();
-//    c->legend()->hide();
-//    c->addSeries(lineseries);
-//    c->createDefaultAxes();
-//    ui->spectrum->setChart(c);
-//
-//    draw_pattern(max);
-//
-//
-//}
-
-//void MainWindow::draw_pattern(double max){
-//    // 添加测量点到方向图
-//    if (ui->tabWidget->currentIndex() == 0){
-//        pattern_data->append(ui->current_azimuth->text().toDouble(), max);
-//    }else{
-//        pattern_data->append(ui->le_current_angle->text().toDouble(), max);
-//    }
-//
-//    chart = new QPolarChart();
-//    chart->legend()->hide();
-//    chart->addSeries(pattern_data);
-//
-//    chart->createDefaultAxes();
-//    QList<QAbstractAxis *> axisList = chart->axes();
-//    axisList.at(0)->setRange(0,360);
-//
-//    ui->pattern->setChart(chart);
-//}
-
-//void MainWindow::freq_linespace()
-//{
-//    if(xaxis->length()!=0){
-//        xaxis->clear();
-//    }
-//
-//    double start_freq = ui->start_freq->text().toDouble();
-//    double stop_freq = ui->stop_freq->text().toDouble();
-//    int sample_points = ui->sample_points->text().toInt();
-//    xaxis = new QVector<double>();
-//    double step_freq = (stop_freq - start_freq)/sample_points;
-//    for (int i=0; i<sample_points; i++) {
-//        xaxis->push_back(start_freq + i*step_freq);
-//    }
-//}
-
-
-//QString MainWindow::select_save_file()
-//{
-//    QString fileName;
-//    fileName = QFileDialog::getSaveFileName(this,
-//            tr("Save file"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("CSV (*.csv)"));
-//
-//    if (!fileName.isNull())
-//    {
-//        //fileName是文件名
-//
-//        return fileName;
-//    }else{
-//        //点的是取消
-//
-//        return fileName;
-//    }
-//}
-
-
-
-
+    mission.mission_start(filepath, filename);
+}
 
 //void MainWindow::on_process_enable(bool enable)
 //{
@@ -351,7 +331,6 @@ void MainWindow::on_rotator_angle_updated(double pitch, double azimuth) {
 //        set_rotator_config_enable(true);
 //    }
 //}
-
 
 //void MainWindow::on_start_test_clicked()
 //{
@@ -551,5 +530,3 @@ void MainWindow::on_rotator_angle_updated(double pitch, double azimuth) {
 //{
 //    QString angle = ui->le_motor_angle->text();
 //}
-
-

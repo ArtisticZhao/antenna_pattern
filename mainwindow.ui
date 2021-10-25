@@ -59,7 +59,11 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QLineEdit" name="le_n9918a_start_freq"/>
+              <widget class="QLineEdit" name="le_n9918a_start_freq">
+               <property name="text">
+                <string>433e6</string>
+               </property>
+              </widget>
              </item>
              <item row="3" column="2">
               <widget class="QLabel" name="label_8">
@@ -123,7 +127,11 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QLineEdit" name="le_n9918a_ip"/>
+              <widget class="QLineEdit" name="le_n9918a_ip">
+               <property name="text">
+                <string>192.168.2.110</string>
+               </property>
+              </widget>
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="pb_n9918a_connect">
@@ -139,7 +147,11 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QLineEdit" name="le_n9918a_stop_freq"/>
+              <widget class="QLineEdit" name="le_n9918a_stop_freq">
+               <property name="text">
+                <string>437e6</string>
+               </property>
+              </widget>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_2">
@@ -156,7 +168,11 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QLineEdit" name="le_n9918a_sample"/>
+              <widget class="QLineEdit" name="le_n9918a_sample">
+               <property name="text">
+                <string>200</string>
+               </property>
+              </widget>
              </item>
              <item row="8" column="0">
               <widget class="QLabel" name="label_11">

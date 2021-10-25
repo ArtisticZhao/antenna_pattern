@@ -5,6 +5,7 @@ N9918a::N9918a()
 	:telnet(this),
 	cmd_lock(false){
 	deviceOK = DISCONNECTED;
+	xaxis = nullptr;
 	connect(&telnet, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(on_state_changed(QAbstractSocket::SocketState)));
 	connect(&telnet, SIGNAL(newData(const char*, int)), this, SLOT(msg_callback(const char*, int)));
 }
@@ -27,12 +28,18 @@ void N9918a::init(QString sample_points, QString start_freq, QString stop_freq) 
 	send_cmd(QString("SENS:SWE:POIN %1").arg(sample_points));
 	send_cmd(QString("SENS:FREQ:START %1").arg(start_freq));
 	send_cmd(QString("SENS:FREQ:STOP %1").arg(stop_freq));
+	// generate x-axis
+	generate_freq_linespace(sample_points, start_freq, stop_freq);
+	emit logging(INFO, QString("N9918A set start freq at %1; stop freq at %2; sample point is %3").arg(start_freq).arg(stop_freq).arg(sample_points));
 }
 
 void N9918a::send_cmd(const QString& cmd) {
+	if (deviceOK != CONNECTED) {
+		emit logging(LOG_ERROR, QString("N9918A not ready! Last cmd: %1").arg(cmd));
+		return;
+	}
 	telnet.sendData(cmd.toUtf8());
 	telnet.sendData("\n");
-	//te_n9918a_log->insertPlainText(QString("[CMD] %1\n").arg(QString(cmd.toUtf8())));
 	// 当处理查询语句之后应该等待返回消息再发送下一条
 	if (cmd.indexOf('?') != -1) {
 		cmd_lock = true;
@@ -50,7 +57,22 @@ void N9918a::send_cmd(const QString& cmd) {
 	}
 }
 
-QT_CHARTS_NAMESPACE::QLineSeries* N9918a::measure_power() {
+void N9918a::generate_freq_linespace(QString sample_points_str, QString start_freq_str, QString stop_freq_str) {
+	if (xaxis != nullptr) {
+		delete xaxis;
+	}
+
+	double start_freq = start_freq_str.toDouble();
+	double stop_freq = stop_freq_str.toDouble();
+	int sample_points = sample_points_str.toInt();
+	xaxis = new QVector<double>();
+	double step_freq = (stop_freq - start_freq) / sample_points;
+	for (int i = 0; i < sample_points; i++) {
+		xaxis->push_back(start_freq + i * step_freq);
+	}
+}
+
+QLineSeries* N9918a::measure_power() {
 	send_cmd("INIT:CONT OFF;*OPC?");
 	send_cmd("INIT:IMM;*OPC?");
 	send_cmd("TRACE:DATA?");
@@ -65,7 +87,7 @@ QT_CHARTS_NAMESPACE::QLineSeries* N9918a::measure_power() {
 	foreach(QString num, list) {
 		index++;
 		double temp = num.toDouble();
-		//lineseries->append(xaxis->at(index), temp);
+		lineseries->append(xaxis->at(index), temp);
 		if (max < temp) {
 			max = temp;
 			max_index = index;
@@ -75,7 +97,7 @@ QT_CHARTS_NAMESPACE::QLineSeries* N9918a::measure_power() {
 		}
 	}
 
-	emit measure_updated(max, min, max_index);
+	emit measure_updated(max, min, xaxis->at(max_index));
 	return lineseries;
 }
 

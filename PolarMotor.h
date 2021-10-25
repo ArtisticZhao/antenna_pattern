@@ -25,6 +25,7 @@ public:
 	void disconnect();
 	bool turn_to(double angle);
 	void reset_angle();
+	void turn_to_zero();
 
 
 private:
@@ -32,7 +33,7 @@ private:
 	QTimer* timerReadMotor;          // 定时读取串口数据
 	bool motor_cmd_lock;             // 命令结果等待
 
-	void send_cmd(const QByteArray& cmd);
+	bool send_cmd(const QByteArray& cmd);
 	bool wait_turn(double angle);
 	bool wait_reset();
 

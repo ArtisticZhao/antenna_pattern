@@ -37,46 +37,7 @@ public:
 //protected:
 //    //这是一个虚函数，继承自QEvent.只要重写了这个虚函数，当你按下窗口右上角的"×"时，就会调用你所重写的此函数.
 //    /*void closeEvent(QCloseEvent*event);*/
-//
-//private:
-//    void set_status_text(const QString &n9918a, const QString &rotator);  // 设置底部状态栏
-//
-//    // 9918相关函数
-////    void draw_spectrum(QVector<double>* xaxis, QVector<double>* spectrum_data);
-//    void draw_pattern(double max);
-//
-//
-//    // file
-//    QString select_save_file();
-//
-//    // 防呆
-//    void set_n9918_config_enable(bool enable);
-//    void set_rotator_config_enable(bool enable);
-//    void on_process_enable(bool enable);    // 当测试程序开始 结束时 改变一些界面的状态
-//
-//
-//
-//private slots:
-//
-//    // rotator
-//    void on_com_connect_clicked();
-//    void on_btn_refresh_com_clicked();
-//    void on_rotator_log_textChanged();
-//
-//    void on_set_pitch_clicked();
-//    void on_pb_set_azimuth_clicked();
-//
-//
-//    // motor
-//    void on_com_connect_motor_clicked();
-//    void on_btn_refresh_com_motor_clicked();
-//    void on_pb_turn_motor_clicked();
-//
-//
-//    // test
-//    void on_start_test_clicked();
-//    void on_stop_test_clicked();
-//
+
 
 private:
     Ui::MainWindow *ui;
@@ -87,13 +48,9 @@ private:
     QString n9918a_status;
     QString rotator_status;
     QString polar_motor_status;
-    // 绘图相关
-    QChart *c;
-    QPolarChart *chart;
-    QSplineSeries *pattern_data;
-
 
     void statusBar_status(Module module, QString status);
+    QString select_save_file();
 
 
 // 事件响应
@@ -103,7 +60,7 @@ private slots:
 
     void on_pb_n9918a_connect_clicked();
     void on_n9918a_status_updated(DEV_STATUS deviceOK);
-    void on_n9918a_measure_updated(double max_power, double min_power, int max_index);
+    void on_n9918a_measure_updated(double max_power, double min_power, double max_freq);
 
     void on_pb_polar_motor_connect_clicked();
     void on_pb_polar_motor_set_angle_clicked();
@@ -116,5 +73,10 @@ private slots:
     void on_pb_rotator_set_azimuth_clicked();
     void on_rotator_status_changed();
     void on_rotator_angle_updated(double pitch, double azimuth);
+
+    void on_checkBox_polar_motor_preconfig_enable_stateChanged();
+    void on_checkBox_rotator_preconfig_enable_stateChanged();
+
+    void on_pb_start_mission_clicked();
 };
 #endif // MAINWINDOW_H

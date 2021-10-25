@@ -69,7 +69,8 @@ bool PolarMotor::turn_to(double angle) {
 	}
 	double d_angle = angle * 100;
 	
-	send_cmd(QString("cmd %1\n").arg((int)(d_angle)).toUtf8());
+	bool res = send_cmd(QString("cmd %1\n").arg((int)(d_angle)).toUtf8());
+	if (!res) return false;  // send cmd failed, turn.
 	for (int i = 0; i < 10; i++) {
 		bool res = wait_turn(angle);
 		if (res) {
@@ -85,10 +86,18 @@ void PolarMotor::reset_angle() {
 	wait_reset();
 }
 
-void PolarMotor::send_cmd(const QByteArray& cmd) {
+void PolarMotor::turn_to_zero() {
+	turn_to(0);
+}
+
+bool PolarMotor::send_cmd(const QByteArray& cmd) {
 	if (comOk) {
 		motor_cmd_lock = true;
 		motor_com->write(cmd);
+		return true;
+	} else {
+		emit logging(LOG_ERROR, "Polar motor not ready!!!");
+		return false;
 	}
 }
 
@@ -158,7 +167,5 @@ void PolarMotor::read_data() {
 			emit update_angle(current_angle);
 		}
 	}
-	
-
 }
 

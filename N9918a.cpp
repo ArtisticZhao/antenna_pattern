@@ -21,6 +21,8 @@ void N9918a::connectToN9918a(QString ip_addr) {
 }
 
 void N9918a::init(QString sample_points, QString start_freq, QString stop_freq) {
+	this->start_freq = start_freq;
+	this->stop_freq = stop_freq;
 	send_cmd("*CLS");
 	send_cmd("*IDN?");
 	send_cmd("SYST:PRES;*OPC?");
@@ -31,6 +33,10 @@ void N9918a::init(QString sample_points, QString start_freq, QString stop_freq) 
 	// generate x-axis
 	generate_freq_linespace(sample_points, start_freq, stop_freq);
 	emit logging(INFO, QString("N9918A set start freq at %1; stop freq at %2; sample point is %3").arg(start_freq).arg(stop_freq).arg(sample_points));
+}
+
+QString N9918a::return_last_measure_data() {
+	return last_anser;
 }
 
 void N9918a::send_cmd(const QString& cmd) {

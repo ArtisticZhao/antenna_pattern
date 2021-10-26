@@ -261,22 +261,15 @@ void MainWindow::on_pb_start_mission_clicked() {
 		// 用户取消选择
 		return;
 	}
-    // Process file name
-    QFileInfo qfi = QFileInfo(file_full);
-    QString filename = qfi.completeBaseName();
-    QString filepath = qfi.absolutePath();
-    // Check file exist.
-	QStringList filters;
-	filters << QString("%1_*").arg(filename);
-    QDir dir(filepath);
-    QStringList dirs = dir.entryList(filters);
-	if (dirs.size() > 0) {
-		// file exist.
-		QMessageBox::StandardButton reply;
-		reply = QMessageBox::question(this, QStringLiteral("文件存在"), QStringLiteral("文件%1_*已经存在，是否覆盖?").arg(filename),
-			QMessageBox::Yes | QMessageBox::No);
-        if (reply == QMessageBox::No) return;
-	}
+    
+ //   // Check file exist.
+	//QStringList filters;
+	//filters << QString("%1_*").arg(filename);
+ //   QDir dir(filepath);
+ //   QStringList dirs = dir.entryList(filters);
+	//if (dirs.size() > 0) {
+	//	
+	//}
 
     MissonType type;
     if (ui->rb_patten->isChecked()) {
@@ -302,7 +295,7 @@ void MainWindow::on_pb_start_mission_clicked() {
     connect(&mission, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
     n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_start_freq->text(), ui->le_n9918a_stop_freq->text());
 
-    mission.mission_start(filepath, filename);
+    mission.mission_start(file_full);
 }
 
 //void MainWindow::on_process_enable(bool enable)

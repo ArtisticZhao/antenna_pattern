@@ -21,6 +21,8 @@ signals:
 
 public:
 	DEV_STATUS deviceOK;
+	QString start_freq;
+	QString stop_freq;
 	N9918a();
 	~N9918a();
 	void connectToN9918a(QString ip_addr);
@@ -28,6 +30,7 @@ public:
 
 	QLineSeries* measure_power();
 	void init(QString sample_points, QString start_freq, QString stop_freq);
+	QString return_last_measure_data();
 
 private:
 	QTelnet telnet;

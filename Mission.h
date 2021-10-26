@@ -26,7 +26,7 @@ public:
 		init_draw();
 	}
 
-	void mission_start(QString filepath, QString filename);
+	void mission_start(QString file_full);
 
 private:
 	MissonType type;
@@ -49,6 +49,10 @@ private:
 	QLineSeries* spectrum_data;
 	QChartView* pattern;
 	QSplineSeries* pattern_data;
+
+	QString filepath;
+	QList<QString> save_data;
+	QFile* file_obj;
 	
 	bool is_all_ready() {
 		return (n9918a->deviceOK == CONNECTED) && rotator->comOk && polar_motor->comOk;
@@ -57,5 +61,10 @@ private:
 	void draw_spectrum(QLineSeries* lineseries);
 	void new_pattern();
 	void draw_pattern_add_point(double angle, double max_power);
+	// file
+	bool create_folder(QString file_full);
+	bool create_result_file(QString filename);
+	void append_result(double current_angle, QString n9918_result);
+	bool save_result_to_file();
 };
 

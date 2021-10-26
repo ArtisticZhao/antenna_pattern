@@ -61,7 +61,15 @@ void Mission::mission_start(QString file_full) {
 			QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
 			draw_pattern_add_point((double)i, 1.0);
 			QThread::msleep(50);
-		}*/
+		}
+		save_pattern_to_file("test");*/
+
+		// test spectrum chart
+		/*QLineSeries* qs = new QLineSeries();
+		for (int i=0; i<100; i++) {
+			qs->append(i, i);
+		}
+		draw_spectrum(qs);*/
 	}
 	else if (type == MissonType::RadiationPattern) {
 		if (!polar_enable) {
@@ -76,8 +84,9 @@ void Mission::mission_start(QString file_full) {
 				// save one line.
 				append_result(pre_rotator_angle, n9918a->return_last_measure_data());
 			}
-			// TODO save an file, save pattern picture.
+			// save an file, save pattern picture.
 			save_result_to_file();
+			save_pattern_to_file(QString("RadiationPattern_once"));
 		} else {
 			polar_motor->turn_to_zero();
 			emit logging(INFO, QString("polar motor set to ZERO"));
@@ -95,8 +104,9 @@ void Mission::mission_start(QString file_full) {
 					// save one line.
 					append_result(pre_rotator_angle, n9918a->return_last_measure_data());
 				}
-				// TODO save an file, save pattern picture.
+				// save an file, save pattern picture.
 				save_result_to_file();
+				save_pattern_to_file(QString("RadiationPattern_polar_%1").arg(QString::number(pre_polar_angle)));
 			}
 		}
 	}
@@ -104,7 +114,8 @@ void Mission::mission_start(QString file_full) {
 		if (!rotator_enable) {
 			polar_motor->turn_to_zero();
 			emit logging(INFO, QString("polar motor set to ZERO"));
-			// TODO create result file
+			// create result file
+			create_result_file(QString("Polarization_once"));
 			foreach(pre_polar_angle, polar_v) {
 				polar_motor->turn_to(pre_polar_angle);
 				emit logging(INFO, QString("polar motor to %1").arg(pre_polar_angle));
@@ -112,8 +123,9 @@ void Mission::mission_start(QString file_full) {
 				// save one line.
 				append_result(pre_polar_angle, n9918a->return_last_measure_data());
 			}
-			// TODO save an file, save pattern picture.
+			// save an file, save pattern picture.
 			save_result_to_file();
+			save_pattern_to_file(QString("Polarization_once"));
 		} else {
 			rotator->turn_to_zero();
 			emit logging(INFO, QString("rotator set to ZERO"));
@@ -122,7 +134,8 @@ void Mission::mission_start(QString file_full) {
 				emit logging(INFO, QString("rotator to %1").arg(pre_rotator_angle));
 				rotator->turn_to_zero();
 				emit logging(INFO, QString("rotator set to ZERO"));
-				// TODO create result file
+				// create result file
+				create_result_file(QString("Polarization_direction_%1").arg(QString::number(pre_rotator_angle)));
 				foreach(pre_polar_angle, polar_v) {
 					polar_motor->turn_to(pre_polar_angle);
 					emit logging(INFO, QString("polar motor to %1").arg(pre_polar_angle));
@@ -130,8 +143,9 @@ void Mission::mission_start(QString file_full) {
 					// save one line.
 					append_result(pre_polar_angle, n9918a->return_last_measure_data());
 				}
-				// TODO save an file, save pattern picture.
+				// save an file, save pattern picture.
 				save_result_to_file();
+				save_pattern_to_file(QString("Polarization_direction_%1").arg(QString::number(pre_rotator_angle)));
 			}
 		}
 	}
@@ -162,23 +176,37 @@ void Mission::init_draw() {
 }
 
 void Mission::draw_spectrum(QLineSeries* lineseries) {
-	spectrum_data = lineseries;
-	delete spectrum->chart()->axisX();
-	delete spectrum->chart()->axisY();
-	spectrum->repaint();
-	delete spectrum->chart()->series()[0];  // delete old series.
-	spectrum->chart()->addSeries(spectrum_data);
-	
-	spectrum->chart()->createDefaultAxes();
+	QChart* old_chart = spectrum->chart();
+	QChart* c = new QChart();
+	c->legend()->hide();
+	c->addSeries(lineseries);
+	c->createDefaultAxes();
+	spectrum->setChart(c);
+	if (old_chart != nullptr) {
+		delete old_chart;
+	}
 }
 
 void Mission::new_pattern() {
+	power_max = -9999999;
+	power_min = 9999999;
 	pattern_data->clear();
 }
 
 void Mission::draw_pattern_add_point(double angle, double max_power) {
 	// add measure point to pattern data
 	pattern_data->append(angle, max_power);
+
+	// update axis range.
+	if (max_power > power_max) {
+		power_max = max_power;
+	}
+	if (max_power < power_min) {
+		power_min = max_power;
+	}
+	QList<QAbstractAxis*> axisList = pattern->chart()->axes();
+	axisList.at(1)->setRange(power_min<0?power_min*1.2:power_min*0.8, 
+		power_max<0?power_max*0.8:power_max*1.2);
 }
 
 bool Mission::create_folder(QString file_full) {
@@ -256,5 +284,22 @@ bool Mission::save_result_to_file() {
 	file_obj->close();
 	delete file_obj;
 	return true;
+}
+
+void Mission::save_pattern_to_file(QString filename) {
+	QScreen* screen = QGuiApplication::primaryScreen();
+	QPixmap p = screen->grabWindow(pattern->winId());
+	QImage image = p.toImage();
+	QDir dir(QDir::cleanPath(filepath + QDir::separator() + filename));
+	QString file_full = QString("%1.png").arg(dir.absolutePath());
+	qDebug() << file_full;
+	file_obj = new QFile(file_full);
+	if (file_obj->exists()) {
+		emit logging(WARNNING, QString("%1 file exists! overwrite...").arg(file_full));
+		QFile fileTemp(file_full);
+		fileTemp.remove();
+	}
+	image.save(file_full);
+	emit logging(INFO, QString("pattern image save to %1").arg(file_full));
 }
 

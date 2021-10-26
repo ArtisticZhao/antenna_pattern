@@ -49,6 +49,7 @@ private:
 	QLineSeries* spectrum_data;
 	QChartView* pattern;
 	QSplineSeries* pattern_data;
+	double power_max, power_min; // save max and min to set axis range.
 
 	QString filepath;
 	QList<QString> save_data;
@@ -66,5 +67,6 @@ private:
 	bool create_result_file(QString filename);
 	void append_result(double current_angle, QString n9918_result);
 	bool save_result_to_file();
+	void save_pattern_to_file(QString filename);
 };
 

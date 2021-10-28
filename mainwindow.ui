@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1159</width>
-    <height>892</height>
+    <width>1163</width>
+    <height>902</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,7 +21,7 @@
        <widget class="QTabWidget" name="tabWidget">
         <property name="maximumSize">
          <size>
-          <width>299</width>
+          <width>355</width>
           <height>16777215</height>
          </size>
         </property>
@@ -43,7 +43,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>275</width>
+              <width>355</width>
               <height>248</height>
              </size>
             </property>
@@ -60,6 +60,12 @@
              </item>
              <item row="2" column="1">
               <widget class="QLineEdit" name="le_n9918a_start_freq">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="text">
                 <string>433e6</string>
                </property>
@@ -128,6 +134,12 @@
              </item>
              <item row="1" column="1">
               <widget class="QLineEdit" name="le_n9918a_ip">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="text">
                 <string>192.168.2.110</string>
                </property>
@@ -135,6 +147,12 @@
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="pb_n9918a_connect">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -148,6 +166,12 @@
              </item>
              <item row="3" column="1">
               <widget class="QLineEdit" name="le_n9918a_stop_freq">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="text">
                 <string>437e6</string>
                </property>
@@ -169,6 +193,12 @@
              </item>
              <item row="4" column="1">
               <widget class="QLineEdit" name="le_n9918a_sample">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="text">
                 <string>200</string>
                </property>
@@ -183,6 +213,12 @@
              </item>
              <item row="6" column="1">
               <widget class="QLineEdit" name="le_n9918a_maxpower_freq">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="palette">
                 <palette>
                  <active>
@@ -227,6 +263,12 @@
              </item>
              <item row="7" column="1">
               <widget class="QLineEdit" name="le_n9918a_maxpower">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="palette">
                 <palette>
                  <active>
@@ -271,6 +313,12 @@
              </item>
              <item row="8" column="1">
               <widget class="QLineEdit" name="le_n9918a_minpower">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
                <property name="palette">
                 <palette>
                  <active>
@@ -347,7 +395,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>275</width>
+              <width>355</width>
               <height>151</height>
              </size>
             </property>
@@ -356,12 +404,25 @@
             </property>
             <layout class="QGridLayout" name="gridLayout">
              <item row="1" column="1">
-              <widget class="QComboBoxMoreSignal" name="cb_polar_motor_com"/>
+              <widget class="QComboBoxMoreSignal" name="cb_polar_motor_com">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>21</height>
+                </size>
+               </property>
+              </widget>
              </item>
              <item row="2" column="2">
               <widget class="QPushButton" name="pb_polar_motor_set_angle">
                <property name="enabled">
                 <bool>false</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
                </property>
                <property name="maximumSize">
                 <size>
@@ -377,7 +438,14 @@
              <item row="2" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
-                <widget class="QLineEdit" name="le_polar_motor_cmd_angle"/>
+                <widget class="QLineEdit" name="le_polar_motor_cmd_angle">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_18">
@@ -390,6 +458,12 @@
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="pb_polar_motor_connect">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -452,6 +526,12 @@
               <layout class="QHBoxLayout" name="horizontalLayout_2">
                <item>
                 <widget class="QLineEdit" name="le_polar_motor_current_angle">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
                  <property name="palette">
                   <palette>
                    <active>
@@ -508,6 +588,12 @@
                <property name="enabled">
                 <bool>false</bool>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -532,7 +618,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>275</width>
+              <width>355</width>
               <height>201</height>
              </size>
             </property>
@@ -571,6 +657,12 @@
               <widget class="QPushButton" name="pb_rotator_set_pitch">
                <property name="enabled">
                 <bool>false</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
                </property>
                <property name="maximumSize">
                 <size>
@@ -615,6 +707,12 @@
                <property name="enabled">
                 <bool>false</bool>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -627,10 +725,23 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QComboBoxMoreSignal" name="cb_rotator_com"/>
+              <widget class="QComboBoxMoreSignal" name="cb_rotator_com">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>21</height>
+                </size>
+               </property>
+              </widget>
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="pb_rotator_connect">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>23</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>40</width>
@@ -645,7 +756,14 @@
              <item row="3" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
-                <widget class="QLineEdit" name="le_rotator_cmd_azimuth"/>
+                <widget class="QLineEdit" name="le_rotator_cmd_azimuth">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_27">
@@ -659,7 +777,14 @@
              <item row="2" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_3">
                <item>
-                <widget class="QLineEdit" name="le_rotator_cmd_pitch"/>
+                <widget class="QLineEdit" name="le_rotator_cmd_pitch">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_25">
@@ -681,6 +806,12 @@
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <item>
                 <widget class="QLineEdit" name="le_rotator_current_pitch">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
                  <property name="palette">
                   <palette>
                    <active>
@@ -736,6 +867,12 @@
               <layout class="QHBoxLayout" name="horizontalLayout_6">
                <item>
                 <widget class="QLineEdit" name="le_rotator_current_azimuth">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>19</height>
+                  </size>
+                 </property>
                  <property name="palette">
                   <palette>
                    <active>
@@ -801,7 +938,7 @@
        <widget class="QTabWidget" name="tabWidget_2">
         <property name="maximumSize">
          <size>
-          <width>299</width>
+          <width>355</width>
           <height>165</height>
          </size>
         </property>
@@ -876,6 +1013,12 @@
             </item>
             <item row="1" column="2">
              <widget class="QLineEdit" name="le_rotator_preconfig_start_angle">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>16</height>
+               </size>
+              </property>
               <property name="text">
                <string>0</string>
               </property>
@@ -945,6 +1088,12 @@
               <property name="enabled">
                <bool>false</bool>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>16</height>
+               </size>
+              </property>
               <property name="text">
                <string>0</string>
               </property>
@@ -979,6 +1128,12 @@
             </item>
             <item>
              <widget class="QPushButton" name="pb_start_mission">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>23</height>
+               </size>
+              </property>
               <property name="text">
                <string>开始任务</string>
               </property>
@@ -1072,7 +1227,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1159</width>
+     <width>1163</width>
      <height>23</height>
     </rect>
    </property>

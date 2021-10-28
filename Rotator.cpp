@@ -4,7 +4,7 @@
 #include "rotatorprotocol.h"
 
 Rotator::Rotator() {
-	// ³õÊ¼»¯¶Á´®¿Ú¶¨Ê±Æ÷
+	// åˆå§‹åŒ–è¯»ä¸²å£å®šæ—¶å™¨
 	timerRead = new QTimer(this);
 	timerRead->setInterval(100);
 	connect(timerRead, SIGNAL(timeout()), this, SLOT(read_data()));
@@ -17,24 +17,24 @@ Rotator::~Rotator() {
 
 void Rotator::connectToCom(QString com_port) {
 	if (!comOk) {
-		// ³õÊ¼»¯´®¿Ú
+		// åˆå§‹åŒ–ä¸²å£
 		com = new QextSerialPort(com_port, QextSerialPort::Polling);
 		comOk = com->open(QIODevice::ReadWrite);
 		if (comOk) {
-			//Çå¿Õ»º³åÇø
+			//æ¸…ç©ºç¼“å†²åŒº
 			com->flush();
-			//ÉèÖÃ²¨ÌØÂÊ
+			//è®¾ç½®æ³¢ç‰¹çŽ‡
 			com->setBaudRate(BAUD115200);
-			//ÉèÖÃÊý¾ÝÎ»
+			//è®¾ç½®æ•°æ®ä½
 			com->setDataBits(DATA_8);
-			//ÉèÖÃÐ£ÑéÎ»
+			//è®¾ç½®æ ¡éªŒä½
 			com->setParity(PAR_NONE);
-			//ÉèÖÃÍ£Ö¹Î»
+			//è®¾ç½®åœæ­¢ä½
 			com->setStopBits(STOP_1);
 			com->setFlowControl(FLOW_OFF);
 			com->setTimeout(10);
 
-			//¶ÁÈ¡Êý¾Ý
+			//è¯»å–æ•°æ®
 			timerRead->start();
 			emit status_changed();
 		}
@@ -43,7 +43,7 @@ void Rotator::connectToCom(QString com_port) {
 
 void Rotator::disconnect() {
 	if (comOk) {
-		// ¶Ï¿ª´®¿Ú
+		// æ–­å¼€ä¸²å£
 		timerRead->stop();
 		comOk = false;
 		com->close();
@@ -52,11 +52,11 @@ void Rotator::disconnect() {
 	}
 }
 
-void Rotator::turn_to(double azimuth) {
+bool Rotator::turn_to(double azimuth) {
 	RotatorProtocol rp;
-	rp.set_target_angle((int)(azimuth * 100), 0, AZIMUTH);
+	rp.set_target_angle((int)(azimuth * 100), 0, RotatorProtocol::AZIMUTH);
 	bool res = send_cmd(rp.get_bitstring());
-	if (!res) return;
+	if (!res) return false;
 	// wait rotator position
 	int timeout = 100;
 	double delta = azimuth - current_azimuth;
@@ -64,17 +64,15 @@ void Rotator::turn_to(double azimuth) {
 	while (!(-0.1 < delta && delta < 0.1)) {
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
 		delta = azimuth - current_azimuth;
-		if (kill_process) {
-			return;
-		}
 		timeout--;
 		if (timeout == 0) {
-			emit logging(WARNNING, "Rotator timeout!");
-			break;
+			emit logging(LogLevel::Warnning, "Rotator timeout!");
+			return false;
 		}
 		QThread::msleep(50);
 	}
-	emit logging(INFO, QString("turn to the position! %1\n").arg(current_azimuth));
+	emit logging(LogLevel::Info, QString("turn to the position! %1\n").arg(current_azimuth));
+	return true;
 }
 
 void Rotator::turn_to_zero() {
@@ -84,13 +82,13 @@ void Rotator::turn_to_zero() {
 
 void Rotator::set_pitch(double pitch) {
 	RotatorProtocol rp;
-	rp.set_target_angle(0, (int)(pitch * 100), PITCH);
+	rp.set_target_angle(0, (int)(pitch * 100), RotatorProtocol::PITCH);
 	send_cmd(rp.get_bitstring());
 }
 
 void Rotator::set_azimuth(double azimuth) {
 	RotatorProtocol rp;
-	rp.set_target_angle((int)(azimuth * 100), 0, AZIMUTH);
+	rp.set_target_angle((int)(azimuth * 100), 0, RotatorProtocol::AZIMUTH);
 	send_cmd(rp.get_bitstring());
 }
 
@@ -100,7 +98,7 @@ bool Rotator::send_cmd(const QByteArray& cmd) {
 		return true;
 	}
 	else {
-		emit logging(LOG_ERROR, "Rotator not ready!!!");
+		emit logging(LogLevel::Error, "Rotator not ready!!!");
 		return false;
 	}
 }
@@ -116,7 +114,7 @@ void Rotator::read_data() {
 	}
 	int header = data.indexOf(0xaa);
 	if (header == 0) {
-		// ·¢ÏÖÖ¡Í·, ½âÎö½Ç¶È
+		// å‘çŽ°å¸§å¤´, è§£æžè§’åº¦
 		// pitch
 		char pitch[2] = { data[8], data[7] };
 		QByteArray pitch_a = QByteArray(pitch, 2);

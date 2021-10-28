@@ -2,8 +2,6 @@
 #define ROTATORPROTOCOL_H
 #include <QByteArray>
 
-enum AXIS {AZIMUTH=1, PITCH=2, BOTH=3};
-
 class RotatorProtocol
 {
 private:
@@ -23,13 +21,19 @@ private:
         PitchPoint=0x18,
         AzimuthContinue=0x1e,
         PitchContinue=0x1f,
-        Standby=0x40};
+        Standby=0x40
+    };
 //private:
 //    control_frame cmd_frame;
 public:
+    enum Axis {
+        AZIMUTH,
+        PITCH,
+        BOTH
+    };
     RotatorProtocol();
     int set_speed();
-    int set_target_angle(int Azimuth, int Pitch, AXIS axis);
+    int set_target_angle(int Azimuth, int Pitch, Axis axis);
     void check_sum();
     QByteArray get_bitstring();
 };

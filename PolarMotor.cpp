@@ -19,23 +19,23 @@ PolarMotor::~PolarMotor() {
 
 void PolarMotor::connectToCom(QString com) {
 	if (!comOk) {
-		// ³õÊ¼»¯´®¿Ú
+		// åˆå§‹åŒ–ä¸²å£
 		motor_com = new QextSerialPort(com, QextSerialPort::Polling);
 		comOk = motor_com->open(QIODevice::ReadWrite);
 		if (comOk) {
-			//Çå¿Õ»º³åÇø
+			//æ¸…ç©ºç¼“å†²åŒº
 			motor_com->flush();
-			//ÉèÖÃ²¨ÌØÂÊ
+			//è®¾ç½®æ³¢ç‰¹çŽ‡
 			motor_com->setBaudRate(BAUD115200);
-			//ÉèÖÃÊý¾ÝÎ»
+			//è®¾ç½®æ•°æ®ä½
 			motor_com->setDataBits(DATA_8);
-			//ÉèÖÃÐ£ÑéÎ»
+			//è®¾ç½®æ ¡éªŒä½
 			motor_com->setParity(PAR_NONE);
-			//ÉèÖÃÍ£Ö¹Î»
+			//è®¾ç½®åœæ­¢ä½
 			motor_com->setStopBits(STOP_1);
 			motor_com->setFlowControl(FLOW_OFF);
 			motor_com->setTimeout(10);
-			//¶ÁÈ¡Êý¾Ý
+			//è¯»å–æ•°æ®
 			timerReadMotor->start();
 			// call back ok
 			emit status_changed();
@@ -45,7 +45,7 @@ void PolarMotor::connectToCom(QString com) {
 
 void PolarMotor::disconnect() {
 	if (comOk) {
-		// ¶Ï¿ª´®¿Ú
+		// æ–­å¼€ä¸²å£
 		timerReadMotor->stop();
 		comOk = false;
 		motor_cmd_lock = false;
@@ -58,12 +58,12 @@ void PolarMotor::disconnect() {
 
 bool PolarMotor::turn_to(double angle) {
 	if (motor_cmd_lock) {
-		emit logging(WARNNING, QString("polar motor waiting lock"));
+		emit logging(LogLevel::Warnning, QString("polar motor waiting lock"));
 		qDebug() << "motor_cmd_lock";
 		return false;
 	}
 	if (!(angle>=0 && angle <= 360)) {
-		emit logging(LOG_ERROR, QString("input must in range 0 to 360: %1").arg(angle));
+		emit logging(LogLevel::Error, QString("input must in range 0 to 360: %1").arg(angle));
 		qDebug() << "error range of polar motor turn" << angle;
 		return false;
 	}
@@ -77,7 +77,7 @@ bool PolarMotor::turn_to(double angle) {
 			return true;
 		}
 	}
-	emit logging(LOG_ERROR, QString("polar motor timeout 10 times!!!"));
+	emit logging(LogLevel::Error, QString("polar motor timeout 10 times!!!"));
 	return false;
 }
 
@@ -96,7 +96,7 @@ bool PolarMotor::send_cmd(const QByteArray& cmd) {
 		motor_com->write(cmd);
 		return true;
 	} else {
-		emit logging(LOG_ERROR, "Polar motor not ready!!!");
+		emit logging(LogLevel::Error, "Polar motor not ready!!!");
 		return false;
 	}
 }
@@ -107,14 +107,14 @@ bool PolarMotor::wait_turn(double angle) {
 	while (motor_cmd_lock) {
 		if (current_angle == angle) {
 			motor_cmd_lock = false;
-			emit logging(INFO, QString("polar motor turn OK"));
+			emit logging(LogLevel::Info, QString("polar motor turn OK"));
 			qDebug() << "motor turn ok";
 			return true;
 		}
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
 		timeout--;
 		if (timeout == 0) {
-			emit logging(WARNNING, QString("polar motor turn timeout"));
+			emit logging(LogLevel::Warnning, QString("polar motor turn timeout"));
 			qDebug() << "motor timeout!";
 			motor_cmd_lock = false;
 			return false;
@@ -130,14 +130,14 @@ bool PolarMotor::wait_reset() {
 	while (motor_cmd_lock) {
 		if (current_angle == angle) {
 			motor_cmd_lock = false;
-			emit logging(WARNNING, QString("polar motor reset OK"));
+			emit logging(LogLevel::Warnning, QString("polar motor reset OK"));
 			qDebug() << "motor turn ok";
 			return true;
 		}
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
 		timeout--;
 		if (timeout == 0) {
-			emit logging(WARNNING, QString("polar motor reset timeout"));
+			emit logging(LogLevel::Warnning, QString("polar motor reset timeout"));
 			qDebug() << "motor timeout!";
 			motor_cmd_lock = false;
 			return false;

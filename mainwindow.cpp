@@ -7,7 +7,6 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "Mission.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -18,25 +17,33 @@ MainWindow::MainWindow(QWidget *parent)
     n9918a = new N9918a();
     polar_motor = new PolarMotor();
     rotator = new Rotator();
+    measure_mission = nullptr;
     n9918a_status = "Disconnected";
     polar_motor_status = "Disconnected";
     rotator_status = "Disconnected";
+
+    // process bar
+    pProgressBar = new QProgressBar();
+    pProgressBar->setRange(0, 100);
+    ui->statusbar->addPermanentWidget(pProgressBar);
 
     // 创建信号连接
     connect(ui->cb_polar_motor_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
     connect(ui->cb_rotator_com, SIGNAL(combo_box_showpopup(QComboBoxMoreSignal*)), this, SLOT(on_cb_com_showPopup(QComboBoxMoreSignal*)));
     
-    connect(n9918a, SIGNAL(status_changed(DEV_STATUS)), this, SLOT(on_n9918a_status_updated(DEV_STATUS)));
+    connect(n9918a, SIGNAL(status_changed(DevStatus)), this, SLOT(on_n9918a_status_updated(DevStatus)));
     connect(n9918a, SIGNAL(measure_updated(double, double, double)), this, SLOT(on_n9918a_measure_updated(double, double, double)));
-    connect(n9918a, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    connect(n9918a, SIGNAL(logging(LogLevel, QString)), this, SLOT(on_logging(LogLevel, QString)));
 
     connect(polar_motor, SIGNAL(status_changed()), this, SLOT(on_polar_motor_status_changed()));
     connect(polar_motor, SIGNAL(update_angle(double)), this, SLOT(on_polar_motor_angle_updated(double)));
-    connect(polar_motor, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    connect(polar_motor, SIGNAL(logging(LogLevel, QString)), this, SLOT(on_logging(LogLevel, QString)));
 
     connect(rotator, SIGNAL(status_changed()), this, SLOT(on_rotator_status_changed()));
     connect(rotator, SIGNAL(update_angle(double, double)), this, SLOT(on_rotator_angle_updated(double, double)));
-    connect(rotator, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    connect(rotator, SIGNAL(logging(LogLevel, QString)), this, SLOT(on_logging(LogLevel, QString)));
+
+	
 }
 
 MainWindow::~MainWindow()
@@ -77,18 +84,18 @@ QString MainWindow::select_save_file() {
     }
 }
 
-void MainWindow::on_logging(LOGLEVEL level, QString msg) {
+void MainWindow::on_logging(LogLevel level, QString msg) {
 	QDateTime current_date_time = QDateTime::currentDateTime();
 	QString current_date = current_date_time.toString("hh:mm:ss.zzz");
 
     switch (level) {
-    case INFO:
+    case LogLevel::Info:
         ui->textEdit_log->append(QString("%1: [INFO] %2").arg(current_date).arg(msg));
         break;
-    case WARNNING:
+    case LogLevel::Warnning:
         ui->textEdit_log->append(QString("<font color=\"#FF9912\">%1: [WARNNING] %2</font> ").arg(current_date).arg(msg));
         break;
-    case LOG_ERROR:
+    case LogLevel::Error:
         ui->textEdit_log->append(QString("<font color=\"#FF0000\">%1: [ERROR] %2</font> ").arg(current_date).arg(msg));
         break;
     default:
@@ -105,7 +112,7 @@ void MainWindow::on_cb_com_showPopup(QComboBoxMoreSignal* combo_box) {
 }
 
 void MainWindow::on_pb_n9918a_connect_clicked() {
-    if (n9918a->deviceOK == DISCONNECTED) {
+    if (n9918a->deviceOK == DevStatus::disconnected) {
         n9918a->connectToN9918a(ui->le_n9918a_ip->text());
     }
     else {
@@ -113,9 +120,9 @@ void MainWindow::on_pb_n9918a_connect_clicked() {
     }
 }
 
-void MainWindow::on_n9918a_status_updated(DEV_STATUS deviceOK) {
+void MainWindow::on_n9918a_status_updated(DevStatus deviceOK) {
     switch (deviceOK) {
-    case DISCONNECTED:
+    case DevStatus::disconnected:
         ui->pb_n9918a_connect->setText(QStringLiteral("连接"));
         ui->le_n9918a_ip->setEnabled(true);
         ui->le_n9918a_start_freq->setEnabled(true);
@@ -123,7 +130,7 @@ void MainWindow::on_n9918a_status_updated(DEV_STATUS deviceOK) {
         ui->le_n9918a_sample->setEnabled(true);
         statusBar_status(Module::N9918a, "Disconnected");
         break;
-    case CONNECTING:
+    case DevStatus::connecting:
         ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
 		ui->le_n9918a_ip->setEnabled(false);
 		ui->le_n9918a_start_freq->setEnabled(false);
@@ -131,7 +138,7 @@ void MainWindow::on_n9918a_status_updated(DEV_STATUS deviceOK) {
 		ui->le_n9918a_sample->setEnabled(false);
         statusBar_status(Module::N9918a, "Connecting");
         break;
-    case CONNECTED:
+    case DevStatus::connected:
         ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
 		ui->le_n9918a_ip->setEnabled(false);
 		ui->le_n9918a_start_freq->setEnabled(false);
@@ -256,29 +263,32 @@ void MainWindow::on_checkBox_rotator_preconfig_enable_stateChanged() {
 }
 
 void MainWindow::on_pb_start_mission_clicked() {
+    if (ui->pb_start_mission->text() == QStringLiteral("停止任务")) {
+        qDebug() << "stop mission";
+        if (measure_mission != nullptr) {
+            measure_mission->mission_stop();
+        }
+        ui->pb_start_mission->setText(QStringLiteral("开始任务"));
+        return;
+    }
     QString file_full = select_save_file();
 	if (file_full.length() == 0) {
 		// 用户取消选择
 		return;
 	}
     
- //   // Check file exist.
-	//QStringList filters;
-	//filters << QString("%1_*").arg(filename);
- //   QDir dir(filepath);
- //   QStringList dirs = dir.entryList(filters);
-	//if (dirs.size() > 0) {
-	//	
-	//}
-
+    ui->pb_start_mission->setText(QStringLiteral("停止任务"));
     MissonType type;
     if (ui->rb_patten->isChecked()) {
         type = MissonType::RadiationPattern;
     }else if (ui->rb_polar->isChecked()) {
         type = MissonType::Polarization;
     }
+    if (measure_mission != nullptr) {
+        delete measure_mission;
+    }
     // Create mission
-    Mission mission(type,
+    measure_mission = new Mission(type,
         ui->checkBox_polar_motor_preconfig_enable->isChecked(),
         ui->le_polar_motor_preconfig_start_angle->text().toDouble(),
         ui->le_polar_motor_preconfig_stop_angle->text().toDouble(),
@@ -291,235 +301,83 @@ void MainWindow::on_pb_start_mission_clicked() {
 
         n9918a, polar_motor, rotator
         );
-    mission.set_pattern_widgets(ui->chart_spectrum, ui->chart_pattern);
-    connect(&mission, SIGNAL(logging(LOGLEVEL, QString)), this, SLOT(on_logging(LOGLEVEL, QString)));
+    
+    measure_mission->set_pattern_widgets(ui->chart_spectrum, ui->chart_pattern);
+    connect(measure_mission, SIGNAL(logging(LogLevel, QString)), this, SLOT(on_logging(LogLevel, QString)));
+    connect(measure_mission, SIGNAL(status_changed(bool)), this, SLOT(on_mission_status_changed(bool)));
+    connect(measure_mission, SIGNAL(process_changed(int)), this, SLOT(on_mission_process_changed(int)));
+
     n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_start_freq->text(), ui->le_n9918a_stop_freq->text());
 
-    mission.mission_start(file_full);
+    measure_mission->mission_start(file_full);
+    ui->pb_start_mission->setText(QStringLiteral("开始任务"));
 }
 
-//void MainWindow::on_process_enable(bool enable)
-//{
-//    if (enable){
-//        // 禁用
-//        on_process = true;
-//        set_n9918_config_enable(false);
-//        set_rotator_config_enable(false);
-//        ui->start_test->setEnabled(false);
-//        ui->com_connect->setEnabled(false);
-//        ui->lan_connect->setEnabled(false);
-//        ui->set_pitch->setEnabled(false);
-//        ui->pb_set_azimuth->setEnabled(false);
-//        ui->le_azimuth->setEnabled(false);
-//    }else {
-//        // 启用
-//        on_process = false;
-//        ui->start_test->setEnabled(true);
-//        ui->com_connect->setEnabled(true);
-//        ui->lan_connect->setEnabled(true);
-//        ui->set_pitch->setEnabled(true);
-//        ui->pb_set_azimuth->setEnabled(true);
-//        ui->le_azimuth->setEnabled(true);
-//        set_n9918_config_enable(true);
-//        set_rotator_config_enable(true);
-//    }
-//}
+void MainWindow::on_mission_status_changed(bool busy) {
+	if (busy) {
+		ui->le_n9918a_ip->setEnabled(false);
+		ui->pb_n9918a_connect->setEnabled(false);
+		ui->le_n9918a_start_freq->setEnabled(false);
+		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_sample->setEnabled(false);
 
-//void MainWindow::on_start_test_clicked()
-//{
-//    on_process_enable(true);
-//
-//    // 选择文件保存路径
-//    QString filename = select_save_file();
-//    if(filename.length()==0){
-//        // 用户取消选择
-//        on_process_enable(false);
-//        return;
-//    }
-//    QFile file(filename);
-//    //判断文件是否存在
-//    if(file.exists()){
-//        QFile fileTemp(filename);
-//        fileTemp.remove();
-//    }else{
-//    }
-//    //已读写方式打开文件，
-//    //如果文件不存在会自动创建文件
-//    if(!file.open(QIODevice::ReadWrite)){
-//        QMessageBox messageBox(QMessageBox::Warning,
-//                               QStringLiteral("打开失败"), QStringLiteral("打开文件失败，请重新开始"),
-//                               QMessageBox::Yes , NULL);
-//        messageBox.exec();
-//        on_process_enable(false);
-//        return;
-//    }else{
-//    }
-//
-//    //if( ui->tabWidget->currentIndex() == 1){
-//    //    // 天线极化测试
-//    //    // 写入表头
-//    //    QString content("current angle, data(dBm)\n");
-//    //    file.write(content.toUtf8(),content.length());
-//    //    ui->progressBar->setValue(0);
-//    //    init_n9918a();
-//    //    freq_linespace();
-//    //    QSplineSeries* old_data = pattern_data;
-//
-//    //    pattern_data = new QSplineSeries();
-//    //    old_data->deleteLater();                  // 删掉旧的方向图数据
-//
-//    //    double step_angle = ui->le_step_angle->text().toDouble();
-//    //    double total_angle = ui->le_total_angle->text().toDouble();
-//    //    int movement = (int)(total_angle/step_angle);
-//    //    int move_count = 0;
-//    //    double current_angle = 0;
-//    //    ui->le_current_angle->setText(QString::number(current_angle));
-//    //    for (; move_count<movement; move_count++ ) {
-//    //        ui->progressBar->setValue((int)(((double)move_count)/movement*100));
-//    //        // save data to csv
-//    //        measure_power();
-//    //        content = QString("%1, %2\n").arg(current_angle).arg(last_9918_anser);
-//    //        file.write(content.toUtf8(),content.length());
-//
-//    //        turn_motor(step_angle);
-//    //        current_angle += step_angle;
-//    //        ui->le_current_angle->setText(QString::number(current_angle));
-//    //        if(kill_process){
-//    //            kill_process = false;
-//    //            on_process_enable(false);
-//    //            file.close();
-//    //            return;
-//    //        }
-//    //    }
-//
-//    //    file.close();
-//
-//    //    ui->progressBar->setValue(100);
-//    //    on_process_enable(false);
-//    //    return;
-//    //}
-//
-//    // 写入表头
-//    QString content("set pitch, current pitch, set azimuth, current azimuth, data(dBm)\n");
-//    file.write(content.toUtf8(),content.length());
-//
-//    ui->progressBar->setValue(0);
-//	//init_n9918a();
-//	//freq_linespace();
-//    QSplineSeries* old_data = pattern_data;
-//
-//    pattern_data = new QSplineSeries();
-//    old_data->deleteLater();                  // 删掉旧的方向图数据
-//
-//    //double start_azimuth = ui->start_azimuth->text().toDouble();
-//    //double stop_azimuth = ui->stop_azimuth->text().toDouble();
-//    //double step_azimuth = ui->step_azimuth->text().toDouble();
-//    //int movement = (int)((stop_azimuth-start_azimuth)/step_azimuth);
-//    //int move_count = 0;
-//    //double set_azimuth = start_azimuth;
-//    //for (; move_count<movement; move_count++ ) {
-//    //    ui->progressBar->setValue((int)(((double)move_count)/movement*100));
-//    //    turn_rotator(set_azimuth);
-//    //    // Debug
-//    //    ui->current_azimuth->setText(QString::number(set_azimuth));
-//    //    if(kill_process){
-//    //        kill_process = false;
-//    //        on_process_enable(false);
-//    //        file.close();
-//    //        return;
-//    //    }
-//
-//    //    // save data to csv
-//    //    measure_power();
-//    //    content = QString("%1, %2, %3, %4, %5\n").arg(ui->pitch->text()).arg(ui->current_pitch->text()).arg(set_azimuth).arg(ui->current_azimuth->text()).arg(last_9918_anser);
-//    //    file.write(content.toUtf8(),content.length());
-//
-//    //    set_azimuth += step_azimuth;
-//    //}
-//    //if (set_azimuth != stop_azimuth){
-//    //    set_azimuth = stop_azimuth;
-//    //    turn_rotator(set_azimuth);
-//    //    // save data to csv
-//    //    measure_power();
-//    //    content = QString("%1, %2, %3, %4, %5\n").arg(ui->pitch->text()).arg(ui->current_pitch->text()).arg(set_azimuth).arg(ui->current_azimuth->text()).arg(last_9918_anser);
-//    //    file.write(content.toUtf8(),content.length());
-//    //}
-//    //file.close();
-//
-//    //ui->progressBar->setValue(100);
-//    //on_process_enable(false);
-//}
-//
-//
-////void MainWindow::on_n9918_log_textChanged()
-////{
-////    ui->n9918_log->moveCursor(QTextCursor::End);
-////}
-//
-//
-//void MainWindow::on_com_connect_clicked()
-//{
-//    
-//}
-//
-//
-//
-//
-//void MainWindow::on_set_pitch_clicked()
-//{
-//
-//}
-//
-//
-//
-//void MainWindow::on_rotator_log_textChanged()
-//{
-//    ui->rotator_log->moveCursor(QTextCursor::End);
-//}
-//
-//
-//void MainWindow::on_stop_test_clicked()
-//{
-//    kill_process = true;
-//}
-//
-//void MainWindow::closeEvent(QCloseEvent* event)
-//{
-//    //当文档内容被修改时.
-//    if (!on_process){
-//        event->accept();
-//    }else{
-//        event->ignore();
-//    }
-//}
-//
-//
-//void MainWindow::on_btn_refresh_com_clicked()
-//{
-//    refresh_cmd_port_list();
-//}
-//
-//
-//void MainWindow::on_pb_set_azimuth_clicked()
-//{
-//    double azimuth = ui->le_azimuth->text().toDouble();
-//}
-//
-//
-//void MainWindow::on_btn_refresh_com_motor_clicked()
-//{
-//    refresh_cmd_port_list();
-//}
-//
-//
-//void MainWindow::on_com_connect_motor_clicked()
-//{
-//   
-//}
-//
-//
-//
-//void MainWindow::on_pb_turn_motor_clicked()
-//{
-//    QString angle = ui->le_motor_angle->text();
-//}
+		ui->cb_polar_motor_com->setEnabled(false);
+		ui->pb_polar_motor_connect->setEnabled(false);
+		ui->pb_polar_motor_set_angle->setEnabled(false);
+		ui->pb_polar_motor_set_angle->setEnabled(false);
+		ui->le_polar_motor_cmd_angle->setEnabled(false);
+
+		ui->cb_rotator_com->setEnabled(false);
+		ui->pb_rotator_connect->setEnabled(false);
+		ui->le_rotator_cmd_azimuth->setEnabled(false);
+		ui->le_rotator_cmd_pitch->setEnabled(false);
+		ui->pb_rotator_set_azimuth->setEnabled(false);
+		ui->pb_rotator_set_pitch->setEnabled(false);
+
+		ui->rb_patten->setEnabled(false);
+		ui->rb_polar->setEnabled(false);
+		ui->checkBox_polar_motor_preconfig_enable->setEnabled(false);
+		ui->le_polar_motor_preconfig_start_angle->setEnabled(false);
+		ui->le_polar_motor_preconfig_stop_angle->setEnabled(false);
+		ui->le_polar_motor_preconfig_step_angle->setEnabled(false);
+		ui->checkBox_rotator_preconfig_enable->setEnabled(false);
+		ui->le_rotator_preconfig_start_angle->setEnabled(false);
+		ui->le_rotator_preconfig_stop_angle->setEnabled(false);
+		ui->le_rotator_preconfig_step_angle->setEnabled(false);
+	}
+	else {
+		ui->le_n9918a_ip->setEnabled(true);
+		ui->pb_n9918a_connect->setEnabled(true);
+		ui->le_n9918a_start_freq->setEnabled(true);
+		ui->le_n9918a_stop_freq->setEnabled(true);
+		ui->le_n9918a_sample->setEnabled(true);
+
+		ui->cb_polar_motor_com->setEnabled(true);
+		ui->pb_polar_motor_connect->setEnabled(true);
+		ui->pb_polar_motor_set_angle->setEnabled(true);
+		ui->pb_polar_motor_set_angle->setEnabled(true);
+		ui->le_polar_motor_cmd_angle->setEnabled(true);
+
+		ui->cb_rotator_com->setEnabled(true);
+		ui->pb_rotator_connect->setEnabled(true);
+		ui->le_rotator_cmd_azimuth->setEnabled(true);
+		ui->le_rotator_cmd_pitch->setEnabled(true);
+		ui->pb_rotator_set_azimuth->setEnabled(true);
+		ui->pb_rotator_set_pitch->setEnabled(true);
+
+		ui->rb_patten->setEnabled(true);
+		ui->rb_polar->setEnabled(true);
+		ui->checkBox_polar_motor_preconfig_enable->setEnabled(true);
+		ui->le_polar_motor_preconfig_start_angle->setEnabled(true);
+		ui->le_polar_motor_preconfig_stop_angle->setEnabled(true);
+		ui->le_polar_motor_preconfig_step_angle->setEnabled(true);
+		ui->checkBox_rotator_preconfig_enable->setEnabled(true);
+		ui->le_rotator_preconfig_start_angle->setEnabled(true);
+		ui->le_rotator_preconfig_stop_angle->setEnabled(true);
+		ui->le_rotator_preconfig_step_angle->setEnabled(true);
+	}
+}
+
+void MainWindow::on_mission_process_changed(int process_val) {
+    pProgressBar->setValue(process_val);
+}

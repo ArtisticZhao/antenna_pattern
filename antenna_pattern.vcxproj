@@ -214,6 +214,7 @@
     <QtMoc Include="QComboBoxMoreSignal.h" />
     <QtMoc Include="Rotator.h" />
     <QtMoc Include="Mission.h" />
+    <ClInclude Include="MotorCtrl.h" />
     <ClInclude Include="rotatorprotocol.h" />
   </ItemGroup>
   <ItemGroup>

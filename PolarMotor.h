@@ -4,15 +4,16 @@
 #include <QTimer>
 #include "qextserialport.h"
 #include "logging.h"
+#include "MotorCtrl.h"
 
 
-class PolarMotor : public QObject{
+class PolarMotor : public QObject, public MotorCtrl{
 	Q_OBJECT
 
 signals:
 	void status_changed();
 	void update_angle(double angle);
-	void logging(LOGLEVEL level, QString msg);
+	void logging(LogLevel level, QString msg);
 
 
 public:

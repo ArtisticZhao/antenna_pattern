@@ -12,7 +12,9 @@ enum class MissonType {
 class Mission : public QObject{
 	Q_OBJECT
 signals:
-	void logging(LOGLEVEL level, QString msg);
+	void logging(LogLevel level, QString msg);
+	void status_changed(bool busy);
+	void process_changed(int process_val);
 
 public:
 	Mission(MissonType type, bool polar_enable, double polar_start, double polar_stop, double polar_step,
@@ -27,8 +29,10 @@ public:
 	}
 
 	void mission_start(QString file_full);
+	void mission_stop();
 
 private:
+	bool stop_signal;
 	MissonType type;
 
 	PolarMotor* polar_motor;
@@ -54,9 +58,15 @@ private:
 	QString filepath;
 	QList<QString> save_data;
 	QFile* file_obj;
+
+	// 进度条相关变量
+	int mission_num;
+	int mission_count;
 	
+	void measure_single_loop(std::vector<double>* innerloop, MotorCtrl* inner_motor, QString save_filename);
+
 	bool is_all_ready() {
-		return (n9918a->deviceOK == CONNECTED) && rotator->comOk && polar_motor->comOk;
+		return (n9918a->deviceOK == DevStatus::connected) && rotator->comOk && polar_motor->comOk;
 	}
 	void init_draw();
 	void draw_spectrum(QLineSeries* lineseries);

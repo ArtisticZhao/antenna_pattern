@@ -3,14 +3,15 @@
 #include <QDataStream>
 #include "qextserialport.h"
 #include "logging.h"
+#include "MotorCtrl.h"
 
-class Rotator : public QObject{
+class Rotator : public QObject, public MotorCtrl{
 	Q_OBJECT
 
 signals:
 	void status_changed();
 	void update_angle(double pitch, double azimuth);
-	void logging(LOGLEVEL level, QString msg);
+	void logging(LogLevel level, QString msg);
 
 
 public:
@@ -22,14 +23,13 @@ public:
 	~Rotator();
 	void connectToCom(QString com_port);
 	void disconnect();
-	void turn_to(double azimuth);
+	bool turn_to(double azimuth);
 	void turn_to_zero();
 	void set_pitch(double pitch);
 	void set_azimuth(double azimuth);
 
 
 private:
-	bool kill_process = false;  //停止进程
 	QextSerialPort* com;        //串口通信对象
 	QTimer* timerRead;          //定时读取串口数据
 

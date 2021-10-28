@@ -6,7 +6,7 @@ RotatorProtocol::RotatorProtocol()
 
 }
 
-int RotatorProtocol::set_target_angle(int Azimuth, int Pitch, AXIS axis)
+int RotatorProtocol::set_target_angle(int Azimuth, int Pitch, Axis axis)
 {
     this->cmd_frame.len = 0x6;
     this->cmd_frame.func_code = Position;

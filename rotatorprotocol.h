@@ -27,9 +27,9 @@ private:
 //    control_frame cmd_frame;
 public:
     enum Axis {
-        AZIMUTH,
-        PITCH,
-        BOTH
+        AZIMUTH=1,
+        PITCH=2,
+        BOTH=3
     };
     RotatorProtocol();
     int set_speed();

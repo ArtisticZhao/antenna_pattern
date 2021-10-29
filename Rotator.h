@@ -34,6 +34,8 @@ private:
 	QTimer* timerRead;          //定时读取串口数据
 
 	bool send_cmd(const QByteArray& cmd);
+	bool is_over_leap;       // 在转台接近360°的时候, 可能因为pid的原因显示0.01°左右
+	                         // 这个标志用来区分当前是否是转过一圈的了.
 
 
 private slots :

@@ -71,13 +71,32 @@ bool Rotator::turn_to(double azimuth) {
 		}
 		QThread::msleep(50);
 	}
+	if (azimuth == 360 && current_azimuth > 0) {
+		is_over_leap = true;
+		emit logging(LogLevel::Warnning, QString("turn 360 over leap!\n"));
+	}
 	emit logging(LogLevel::Info, QString("turn to the position! %1\n").arg(current_azimuth));
 	return true;
 }
 
 void Rotator::turn_to_zero() {
-	// TODO: check the angle near 360!
-	set_azimuth(0);
+	if (current_azimuth > 0 && current_azimuth < 1 && is_over_leap) {
+		set_azimuth(240);
+		set_azimuth(120);
+		set_azimuth(0);
+	}
+	else if (current_azimuth > 240) {
+		set_azimuth(240);
+		set_azimuth(120);
+		set_azimuth(0);
+	}
+	else if (current_azimuth > 120) {
+		set_azimuth(120);
+	}
+	else {
+		set_azimuth(0);
+	}
+	is_over_leap = false;
 }
 
 void Rotator::set_pitch(double pitch) {

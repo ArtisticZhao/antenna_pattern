@@ -71,7 +71,8 @@ bool Rotator::turn_to(double azimuth) {
 		}
 		QThread::msleep(50);
 	}
-	if (azimuth == 360 && current_azimuth > 0) {
+	//if (azimuth == 360 && (current_azimuth > 0 || current_azimuth)) {
+	if (azimuth == 360 && (current_azimuth > 0 )) {
 		is_over_leap = true;
 		emit logging(LogLevel::Warnning, QString("turn 360 over leap!\n"));
 	}
@@ -80,6 +81,8 @@ bool Rotator::turn_to(double azimuth) {
 }
 
 void Rotator::turn_to_zero() {
+	emit logging(LogLevel::Warnning, QString("Rotator turn to ZERO\n"));
+	emit logging(LogLevel::Warnning, QString("current_azimuth %1, is overleap %2\n").arg(current_azimuth).arg(is_over_leap));
 	if (current_azimuth > 0 && current_azimuth < 1 && is_over_leap) {
 		set_azimuth(240);
 		set_azimuth(120);

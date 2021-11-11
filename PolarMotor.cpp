@@ -26,7 +26,7 @@ void PolarMotor::connectToCom(QString com) {
 			//清空缓冲区
 			motor_com->flush();
 			//设置波特率
-			motor_com->setBaudRate(BAUD115200);
+			motor_com->setBaudRate(BAUD9600);
 			//设置数据位
 			motor_com->setDataBits(DATA_8);
 			//设置校验位
@@ -71,18 +71,20 @@ bool PolarMotor::turn_to(double angle) {
 	
 	bool res = send_cmd(QString("cmd %1\n").arg((int)(d_angle)).toUtf8());
 	if (!res) return false;  // send cmd failed, turn.
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 100; i++) {
 		bool res = wait_turn(angle);
 		if (res) {
 			return true;
 		}
+		emit logging(LogLevel::Warnning, QString("Resend polar motor cmd!"));
+		send_cmd(QString("cmd %1\n").arg((int)(d_angle)).toUtf8());
 	}
-	emit logging(LogLevel::Error, QString("polar motor timeout 10 times!!!"));
+	emit logging(LogLevel::Error, QString("polar motor timeout 100 times!!!"));
 	return false;
 }
 
 void PolarMotor::reset_angle() {
-	send_cmd(QString("rst\n").toUtf8());
+	send_cmd(QString("rst").toUtf8());
 	wait_reset();
 }
 
@@ -105,9 +107,9 @@ bool PolarMotor::wait_turn(double angle) {
 	int timeout = 100;
 	// waiting for reply
 	while (motor_cmd_lock) {
-		if (current_angle == angle) {
+		if ((current_angle - angle) < 2 && (current_angle - angle) > -2) {
 			motor_cmd_lock = false;
-			emit logging(LogLevel::Info, QString("polar motor turn OK"));
+			emit logging(LogLevel::Info, QString("polar motor turn to %1").arg(angle));
 			qDebug() << "motor turn ok";
 			return true;
 		}

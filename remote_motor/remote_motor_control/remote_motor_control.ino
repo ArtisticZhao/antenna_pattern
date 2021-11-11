@@ -9,7 +9,7 @@
 #define DIR 8
 #define PULSE 9
 #include <MsTimer2.h>
-int current_angle;
+long current_angle;
 void report_angle(){
   Serial.print("Angle: ");
   Serial.print(current_angle);
@@ -27,7 +27,7 @@ void setup() {
   MsTimer2::start();                //开始计时
 
   // set serial port
-  Serial.begin(115200);
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -38,8 +38,8 @@ void loop() {
       current_angle = 0;
     }else{
       String str_angle = getValue(str, ' ', 1);
-      int angle = str_angle.toInt();
-      int d_angle = angle - current_angle;
+      long angle = str_angle.toInt();
+      long d_angle = angle - current_angle;
       if (d_angle > 0){
         ratote(d_angle, 1);
       }else if(d_angle < 0){
@@ -49,9 +49,9 @@ void loop() {
   }
 }
 
-void ratote(int angle, int dir){
+void ratote(long angle, long dir){
   MsTimer2::stop();
-  int r_times = angle / 72;
+  long r_times = angle / 72;
   if (dir == 1) {
     digitalWrite(DIR, LOW);
     current_angle += angle;
@@ -59,26 +59,26 @@ void ratote(int angle, int dir){
     digitalWrite(DIR, HIGH);
     current_angle -= angle;
   }
-  for (int i=0; i<r_times; i++){
+  for (long i=0; i<r_times; i++){
     step(2);
   }
   MsTimer2::start();
 }
 
-void step(int d_time){
+void step(long d_time){
   digitalWrite(PULSE, HIGH);
   delay(d_time);
   digitalWrite(PULSE, LOW);
   delay(d_time);
 }
 
-String getValue(String data, char separator, int index)
+String getValue(String data, char separator, long index)
 {
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
+  long found = 0;
+  long strIndex[] = {0, -1};
+  long maxIndex = data.length()-1;
 
-  for(int i=0; i<=maxIndex && found<=index; i++){
+  for(long i=0; i<=maxIndex && found<=index; i++){
     if(data.charAt(i)==separator || i==maxIndex){
         found++;
         strIndex[0] = strIndex[1]+1;

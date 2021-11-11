@@ -88,7 +88,12 @@ void Rotator::turn_to_zero() {
 		set_azimuth(120);
 		set_azimuth(0);
 	}
-	else if (current_azimuth > 240) {
+	else if (current_azimuth > 359 && is_over_leap) {
+		set_azimuth(240);
+		set_azimuth(120);
+		set_azimuth(0);
+	}
+	else if (current_azimuth > 240 && current_azimuth < 359) {  // 需要避过0附近 359.xx 的角度!
 		set_azimuth(240);
 		set_azimuth(120);
 		set_azimuth(0);

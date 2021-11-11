@@ -294,9 +294,9 @@ void Mission::measure_single_loop(std::vector<double>* innerloop, MotorCtrl* inn
 		emit process_changed(mission_count * 100 / mission_num);  //update process.
 		if (stop_signal) return;
 	}
-	if (innerloop->at(0) == 0) {
-		draw_pattern_add_point(360, pattern_data->at(0).y());  // ∑‚±’Õº–Œ
-	}
+	//if (innerloop->at(0) == 0 && innerloop->back() == 360) {
+	//	draw_pattern_add_point(360, pattern_data->at(0).y());  // ∑‚±’Õº–Œ
+	//}
 	
 	// save an file, save pattern picture.
 	save_result_to_file();

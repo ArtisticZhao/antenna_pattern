@@ -283,7 +283,11 @@ void MainWindow::on_pb_start_mission_clicked() {
         type = MissonType::RadiationPattern;
     }else if (ui->rb_polar->isChecked()) {
         type = MissonType::Polarization;
+    }else if (ui->rb_patten3d->isChecked()) {
+        type = MissonType::RadiationPattern3D;
     }
+
+
     if (measure_mission != nullptr) {
         delete measure_mission;
     }
@@ -380,4 +384,27 @@ void MainWindow::on_mission_status_changed(bool busy) {
 
 void MainWindow::on_mission_process_changed(int process_val) {
     pProgressBar->setValue(process_val);
+}
+
+void MainWindow::on_rb_patten3d_toggled(bool checked) {
+    static bool rotator_preconfig;
+    static bool polar_preconfig;
+    if (checked) {
+        ui->label_rotator_pitch->setText(QStringLiteral("转台俯仰"));
+        ui->label_polar_azimuth->setText(QStringLiteral("转台方位"));
+        rotator_preconfig = ui->checkBox_rotator_preconfig_enable->isChecked();
+        polar_preconfig = ui->checkBox_polar_motor_preconfig_enable->isChecked();
+        ui->checkBox_rotator_preconfig_enable->setChecked(true);
+        ui->checkBox_polar_motor_preconfig_enable->setChecked(true);
+		ui->checkBox_rotator_preconfig_enable->setEnabled(false);
+		ui->checkBox_polar_motor_preconfig_enable->setEnabled(false);
+    }
+    else {
+		ui->label_rotator_pitch->setText(QStringLiteral("转台"));
+        ui->label_polar_azimuth->setText(QStringLiteral("极化电机"));
+		ui->checkBox_rotator_preconfig_enable->setChecked(rotator_preconfig);
+		ui->checkBox_polar_motor_preconfig_enable->setChecked(polar_preconfig);
+		ui->checkBox_rotator_preconfig_enable->setEnabled(true);
+		ui->checkBox_polar_motor_preconfig_enable->setEnabled(true);
+    }
 }

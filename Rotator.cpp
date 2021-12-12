@@ -54,6 +54,7 @@ void Rotator::disconnect() {
 
 bool Rotator::turn_to(double azimuth) {
 	RotatorProtocol rp;
+	emit logging(LogLevel::Info, QString("Rotator azimuth set to %1").arg(azimuth));
 	rp.set_target_angle((int)(azimuth * 100), 0, RotatorProtocol::AZIMUTH);
 	bool res = send_cmd(rp.get_bitstring());
 	if (!res) return false;
@@ -77,6 +78,29 @@ bool Rotator::turn_to(double azimuth) {
 		emit logging(LogLevel::Warnning, QString("turn 360 over leap!\n"));
 	}
 	emit logging(LogLevel::Info, QString("turn to the position! %1\n").arg(current_azimuth));
+	return true;
+}
+
+bool Rotator::turn_pitch_to(double angle) {
+	emit logging(LogLevel::Info, QString("Rotator pitch set to %1").arg(angle));
+	RotatorProtocol rp;
+	rp.set_target_angle((int)(angle * 100), 0, RotatorProtocol::PITCH);
+	bool res = send_cmd(rp.get_bitstring());
+	if (!res) return false;
+	
+	// wait for turn
+	int timeout = 100;
+	double delta = angle - current_pitch;
+	while (!(-0.1 < delta && delta < 0.1)) {
+		QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+		delta = angle - current_pitch;
+		timeout--;
+		if (timeout == 0) {
+			emit logging(LogLevel::Warnning, "Rotator timeout!");
+			return false;
+		}
+		QThread::msleep(50);
+	}
 	return true;
 }
 

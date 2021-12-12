@@ -976,6 +976,13 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QRadioButton" name="rb_patten3d">
+              <property name="text">
+               <string>方向图3D</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item>
@@ -1056,14 +1063,14 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="label_37">
+             <widget class="QLabel" name="label_rotator_pitch">
               <property name="text">
                <string>转台</string>
               </property>
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QLabel" name="label_38">
+             <widget class="QLabel" name="label_polar_azimuth">
               <property name="text">
                <string>极化电机</string>
               </property>
@@ -1228,7 +1235,7 @@
      <x>0</x>
      <y>0</y>
      <width>1163</width>
-     <height>26</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

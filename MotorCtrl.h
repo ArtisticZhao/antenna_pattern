@@ -4,5 +4,6 @@ class MotorCtrl {
 public:
 	virtual void turn_to_zero()=0;
 	virtual bool turn_to(double angle)=0;
+	virtual bool turn_pitch_to(double angle) = 0;
 };
 

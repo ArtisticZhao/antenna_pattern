@@ -90,6 +90,7 @@ void Mission::mission_start(QString file_full) {
 	MotorCtrl* inner_motor;
 	MotorCtrl* outter_motor;
 	QString save_filename;
+	// 配置内外循环的数据
 	if (type == MissonType::RadiationPattern) {
 		// 测量方向图, 因此rotator的角度在内循环, polar 的角度在外循环
 		innerloop = &rotator_v;
@@ -106,7 +107,7 @@ void Mission::mission_start(QString file_full) {
 			save_filename = QString("RadiationPattern_at_polar_");
 			mission_num = outterloop->size() * innerloop->size();
 		}
-	} else {
+	} else if (type == MissonType::Polarization) {
 		// 测量极化图, 因此rotator的角度在内循环, polar 的角度在外循环
 		outterloop = &rotator_v;
 		innerloop = &polar_v;
@@ -121,16 +122,27 @@ void Mission::mission_start(QString file_full) {
 			save_filename = QString("Polarization_at_direction_");
 			mission_num = outterloop->size() * innerloop->size();
 		}
+	} else if (type == MissonType::RadiationPattern3D) {
+		 // 3d 方向图测量
+		// 外循环是方位  内循环是俯仰
+		outterloop = &polar_v;
+		innerloop = &rotator_v;
+		outter_motor = rotator;
+		inner_motor = rotator;
+		save_filename = QString("RadiationPattern3D_at_azimuth_");
+		mission_num = outterloop->size() * innerloop->size();
 	}
 
 	// 开始loop
 	if (outterloop == nullptr) {
+		// 只配置了单个电机
 		measure_single_loop(innerloop, inner_motor, save_filename);
 		if (stop_signal) {
 			emit status_changed(false);
 			return;
 		}
 	} else {
+		// 两个电机联动
 		outter_motor->turn_to_zero();
 		foreach(outter_angle, *outterloop) {
 			outter_motor->turn_to(outter_angle);
@@ -145,145 +157,32 @@ void Mission::mission_start(QString file_full) {
 	emit status_changed(false);
 }
 
-//void Mission::mission_start(QString file_full) {
-//	
-//	/*if (!is_all_ready()) {
-//		return;
-//	}*/
-//	bool res = create_folder(file_full);
-//	if (!res) return;
-//
-//	// generate rotator angle vector to iteration
-//	std::vector<double> rotator_v(double_inc_iterator(rotator_start, rotator_step), double_inc_iterator(rotator_stop));
-//	// generate polar motor angle vector to iteration
-//	std::vector<double> polar_v(double_inc_iterator(polar_start, polar_step), double_inc_iterator(polar_stop));
-//	double pre_rotator_angle, pre_polar_angle;
-//
-//	if ((!polar_enable && !rotator_enable) 
-//		|| (type == MissonType::RadiationPattern && !rotator_enable)
-//		|| (type == MissonType::Polarization && !polar_enable)){
-//		// measure once.
-//		qDebug() << "measure";
-//		draw_spectrum(n9918a->measure_power());
-//		
-//		// for test
-//		/*new_pattern();
-//		for (int i = 0; i < 360; i++) {
-//			QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-//			draw_pattern_add_point((double)i, 1.0);
-//			QThread::msleep(50);
-//		}
-//		save_pattern_to_file("test");*/
-//
-//		// test spectrum chart
-//		/*QLineSeries* qs = new QLineSeries();
-//		for (int i=0; i<100; i++) {
-//			qs->append(i, i);
-//		}
-//		draw_spectrum(qs);*/
-//	}
-//	else if (type == MissonType::RadiationPattern) {
-//		if (!polar_enable) {
-//			rotator->turn_to_zero();
-//			emit logging(LogLevel::Info, QString("rotator set to ZERO"));
-//			// create result file.
-//			create_result_file(QString("RadiationPattern_once"));
-//			foreach(pre_rotator_angle, rotator_v) {
-//				rotator->turn_to(pre_rotator_angle);
-//				emit logging(LogLevel::Info, QString("rotator to %1").arg(pre_rotator_angle));
-//				draw_spectrum(n9918a->measure_power());
-//				QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-//				// save one line.
-//				append_result(pre_rotator_angle, n9918a->return_last_measure_data());
-//				if (stop_signal) return;
-//			}
-//			// save an file, save pattern picture.
-//			save_result_to_file();
-//			save_pattern_to_file(QString("RadiationPattern_once"));
-//		} else {
-//			polar_motor->turn_to_zero();
-//			emit logging(LogLevel::Info, QString("polar motor set to ZERO"));
-//			foreach(pre_polar_angle, polar_v) {
-//				polar_motor->turn_to(pre_polar_angle);
-//				emit logging(LogLevel::Info, QString("polar motor to %1").arg(pre_polar_angle));
-//				rotator->turn_to_zero();
-//				emit logging(LogLevel::Info, QString("rotator set to ZERO"));
-//				// create result file.
-//				create_result_file(QString("RadiationPattern_polar_%1").arg(QString::number(pre_polar_angle)));
-//				foreach(pre_rotator_angle, rotator_v) {
-//					rotator->turn_to(pre_rotator_angle);
-//					emit logging(LogLevel::Info, QString("rotator to %1").arg(pre_rotator_angle));
-//					draw_spectrum(n9918a->measure_power());
-//					QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-//					// save one line.
-//					append_result(pre_rotator_angle, n9918a->return_last_measure_data());
-//					if (stop_signal) return;
-//				}
-//				// save an file, save pattern picture.
-//				save_result_to_file();
-//				save_pattern_to_file(QString("RadiationPattern_polar_%1").arg(QString::number(pre_polar_angle)));
-//			}
-//		}
-//	}
-//	else if (type == MissonType::Polarization) {
-//		if (!rotator_enable) {
-//			polar_motor->turn_to_zero();
-//			emit logging(LogLevel::Info, QString("polar motor set to ZERO"));
-//			// create result file
-//			create_result_file(QString("Polarization_once"));
-//			foreach(pre_polar_angle, polar_v) {
-//				polar_motor->turn_to(pre_polar_angle);
-//				emit logging(LogLevel::Info, QString("polar motor to %1").arg(pre_polar_angle));
-//				draw_spectrum(n9918a->measure_power());
-//				QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-//				// save one line.
-//				append_result(pre_polar_angle, n9918a->return_last_measure_data());
-//				if (stop_signal) return;
-//			}
-//			// save an file, save pattern picture.
-//			save_result_to_file();
-//			save_pattern_to_file(QString("Polarization_once"));
-//		} else {
-//			rotator->turn_to_zero();
-//			emit logging(LogLevel::Info, QString("rotator set to ZERO"));
-//			foreach(pre_rotator_angle, rotator_v){
-//				rotator->turn_to(pre_rotator_angle);
-//				emit logging(LogLevel::Info, QString("rotator to %1").arg(pre_rotator_angle));
-//				rotator->turn_to_zero();
-//				emit logging(LogLevel::Info, QString("rotator set to ZERO"));
-//				// create result file
-//				create_result_file(QString("Polarization_direction_%1").arg(QString::number(pre_rotator_angle)));
-//				foreach(pre_polar_angle, polar_v) {
-//					polar_motor->turn_to(pre_polar_angle);
-//					emit logging(LogLevel::Info, QString("polar motor to %1").arg(pre_polar_angle));
-//					double measure_max;
-//					draw_spectrum(n9918a->measure_power(&measure_max));
-//					draw_pattern_add_point(pre_polar_angle, measure_max);
-//					QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-//					// save one line.
-//					append_result(pre_polar_angle, n9918a->return_last_measure_data());
-//					if (stop_signal) return;
-//				}
-//				// save an file, save pattern picture.
-//				save_result_to_file();
-//				save_pattern_to_file(QString("Polarization_direction_%1").arg(QString::number(pre_rotator_angle)));
-//			}
-//		}
-//	}
-//}8
 
 void Mission::mission_stop() {
 	emit logging(LogLevel::Warnning, "User signed mission stop signal.");
 	stop_signal = true;
 }
 
+
 void Mission::measure_single_loop(std::vector<double>* innerloop, MotorCtrl* inner_motor, QString save_filename) {
 	double inner_angle;
-	inner_motor->turn_to_zero();
+	if (type == MissonType::RadiationPattern3D) {
+		inner_motor->turn_pitch_to(0);
+	}
+	else {
+		inner_motor->turn_to_zero();
+	}
+	
 	create_result_file(save_filename);
 	new_pattern();
 	foreach(inner_angle, *innerloop) {
-		inner_motor->turn_to(inner_angle);
+		if (type == MissonType::RadiationPattern3D) {
+			inner_motor->turn_pitch_to(inner_angle);
+		}
+		else {
+			inner_motor->turn_to(inner_angle);
+		}
+		
 		double measure_max;
 		draw_spectrum(n9918a->measure_power(&measure_max));
 		qDebug() << measure_max;
@@ -301,6 +200,7 @@ void Mission::measure_single_loop(std::vector<double>* innerloop, MotorCtrl* inn
 	// save an file, save pattern picture.
 	save_result_to_file();
 	save_pattern_to_file(save_filename);
+	emit logging(LogLevel::Info, "Single loop finish! ----------------------------------------------");
 }
 
 void Mission::init_draw() {
@@ -374,7 +274,7 @@ bool Mission::create_folder(QString file_full) {
 	// filename_type_startfreq_stopfreq
 	QString save_dir_name = QString("%1_%2_%3_%4")
 		.arg(filename)
-		.arg((type == MissonType::Polarization) ? "Polarization" : "RadiationPattern")
+		.arg((type == MissonType::Polarization) ? "Polarization" : (type == MissonType::RadiationPattern) ? "RadiationPattern" : "RadiationPattern3D")
 		.arg(n9918a->start_freq).arg(n9918a->stop_freq);
 	QDir dir(QDir::cleanPath(filepath + QDir::separator() + save_dir_name));
 	qDebug() << dir.absolutePath();

@@ -83,5 +83,6 @@ private slots:
     void on_pb_start_mission_clicked();
     void on_mission_status_changed(bool busy);
     void on_mission_process_changed(int process_val);
+    void on_rb_patten3d_toggled(bool checked);
 };
 #endif // MAINWINDOW_H

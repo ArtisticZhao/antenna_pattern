@@ -57,6 +57,7 @@ void PolarMotor::disconnect() {
 }
 
 bool PolarMotor::turn_to(double angle) {
+	emit logging(LogLevel::Info, QString("Polar motor set to %1").arg(angle));
 	if (motor_cmd_lock) {
 		emit logging(LogLevel::Warnning, QString("polar motor waiting lock"));
 		qDebug() << "motor_cmd_lock";
@@ -80,6 +81,11 @@ bool PolarMotor::turn_to(double angle) {
 		send_cmd(QString("cmd %1\n").arg((int)(d_angle)).toUtf8());
 	}
 	emit logging(LogLevel::Error, QString("polar motor timeout 100 times!!!"));
+	return false;
+}
+
+bool PolarMotor::turn_pitch_to(double angle) {
+	emit logging(LogLevel::Error, QString("polar motor has no implementation for turn_pitch_to!"));
 	return false;
 }
 

@@ -25,6 +25,7 @@ public:
 	void connectToCom(QString com);
 	void disconnect();
 	bool turn_to(double angle);
+	bool turn_pitch_to(double angle);
 	void reset_angle();
 	void turn_to_zero();
 

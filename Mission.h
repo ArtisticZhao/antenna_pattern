@@ -6,7 +6,8 @@
 
 enum class MissonType {
 	RadiationPattern,
-	Polarization
+	Polarization,
+	RadiationPattern3D
 };
 
 class Mission : public QObject{
@@ -30,6 +31,7 @@ public:
 
 	void mission_start(QString file_full);
 	void mission_stop();
+	
 
 private:
 	bool stop_signal;
@@ -58,6 +60,7 @@ private:
 	QString filepath;
 	QList<QString> save_data;
 	QFile* file_obj;
+
 
 	// 进度条相关变量
 	int mission_num;

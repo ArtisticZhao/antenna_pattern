@@ -24,6 +24,7 @@ public:
 	void connectToCom(QString com_port);
 	void disconnect();
 	bool turn_to(double azimuth);
+	bool turn_pitch_to(double angle);
 	void turn_to_zero();
 	void set_pitch(double pitch);
 	void set_azimuth(double azimuth);

@@ -23,20 +23,25 @@ void N9918a::connectToN9918a(QString ip_addr) {
 	}
 }
 
-void N9918a::init(QString sample_points, QString start_freq, QString stop_freq) {
-	this->start_freq = start_freq;
-	this->stop_freq = stop_freq;
+void N9918a::init(QString sample_points, QString center_freq, QString span_freq) {
+	this->center_freq = center_freq;
+	this->span_freq = span_freq;
+	double center_f = center_freq.toDouble();
+	double span_f = span_freq.toDouble();
+
 	this->sample_points = sample_points.toInt();
 	send_cmd("*CLS");
 	send_cmd("*IDN?");
 	send_cmd("SYST:PRES;*OPC?");
 	send_cmd("INST:SEL 'SA';*OPC?");
 	send_cmd(QString("SENS:SWE:POIN %1").arg(sample_points));
-	send_cmd(QString("SENS:FREQ:START %1").arg(start_freq));
-	send_cmd(QString("SENS:FREQ:STOP %1").arg(stop_freq));
+	//send_cmd(QString("SENS:FREQ:START %1").arg(start_freq));
+	//send_cmd(QString("SENS:FREQ:STOP %1").arg(stop_freq));
+	send_cmd(QString("SENS:FREQ:CENT %1").arg(center_freq));
+	send_cmd(QString("SENS:FREQ:SPAN %1").arg(span_freq));
 	// generate x-axis
-	generate_freq_linespace(sample_points, start_freq, stop_freq);
-	emit logging(LogLevel::Info, QString("N9918A set start freq at %1; stop freq at %2; sample point is %3").arg(start_freq).arg(stop_freq).arg(sample_points));
+	generate_freq_linespace(sample_points, center_f - span_f / 2, center_f + span_f / 2);
+	emit logging(LogLevel::Info, QString("N9918A set center freq at %1; span freq for %2; sample point is %3").arg(center_freq).arg(span_freq).arg(sample_points));
 }
 
 QString N9918a::return_last_measure_data() {
@@ -67,13 +72,11 @@ void N9918a::send_cmd(const QString& cmd) {
 	}
 }
 
-void N9918a::generate_freq_linespace(QString sample_points_str, QString start_freq_str, QString stop_freq_str) {
+void N9918a::generate_freq_linespace(QString sample_points_str, double start_freq, double stop_freq) {
 	if (xaxis != nullptr) {
 		delete xaxis;
 	}
-
-	double start_freq = start_freq_str.toDouble();
-	double stop_freq = stop_freq_str.toDouble();
+	qDebug() << "start freq, stop freq " << start_freq << stop_freq;
 	int sample_points = sample_points_str.toInt();
 	xaxis = new QVector<double>();
 	double step_freq = (stop_freq - start_freq) / sample_points;
@@ -116,19 +119,15 @@ QLineSeries* N9918a::measure_power(double* power_max) {
 }
 
 void N9918a::msg_callback(const char* msg, int count){
+	// 这里解决了返回一次消息但是没有完全显示完整整个测量结果（tcp正常现象）
 	if (measure_lock) {
 		QString tmp_str = QByteArray(msg, count);
 		QStringList list = tmp_str.split(",");
 		last_anser.append(tmp_str);
 		measure_data_counter += list.size();
-		if (measure_data_counter >= sample_points) {
-			qDebug() << "full last: " << last_anser;
+		if (measure_data_counter >= sample_points) {  // 如果测量结果的数据跟采样点数一致，则认为测量结果完全返回完毕
 			measure_lock = false;
 			cmd_lock = false;
-		}
-		else {
-			qDebug() << "last: " << last_anser;
-			qDebug() << measure_data_counter;
 		}
 	}
 	else {

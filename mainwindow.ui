@@ -59,7 +59,7 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QLineEdit" name="le_n9918a_start_freq">
+              <widget class="QLineEdit" name="le_n9918a_center_freq">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -81,7 +81,7 @@
              <item row="3" column="0">
               <widget class="QLabel" name="label_4">
                <property name="text">
-                <string>终止频率</string>
+                <string>SPAN freq</string>
                </property>
               </widget>
              </item>
@@ -165,7 +165,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QLineEdit" name="le_n9918a_stop_freq">
+              <widget class="QLineEdit" name="le_n9918a_span_freq">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -173,7 +173,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>437e6</string>
+                <string>10e3</string>
                </property>
               </widget>
              </item>
@@ -187,7 +187,7 @@
              <item row="2" column="0">
               <widget class="QLabel" name="label_3">
                <property name="text">
-                <string>起始频率</string>
+                <string>Center freq</string>
                </property>
               </widget>
              </item>

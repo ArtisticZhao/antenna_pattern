@@ -125,24 +125,24 @@ void MainWindow::on_n9918a_status_updated(DevStatus deviceOK) {
     case DevStatus::disconnected:
         ui->pb_n9918a_connect->setText(QStringLiteral("连接"));
         ui->le_n9918a_ip->setEnabled(true);
-        ui->le_n9918a_start_freq->setEnabled(true);
-        ui->le_n9918a_stop_freq->setEnabled(true);
+        ui->le_n9918a_center_freq->setEnabled(true);
+        ui->le_n9918a_span_freq->setEnabled(true);
         ui->le_n9918a_sample->setEnabled(true);
         statusBar_status(Module::N9918a, "Disconnected");
         break;
     case DevStatus::connecting:
         ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
 		ui->le_n9918a_ip->setEnabled(false);
-		ui->le_n9918a_start_freq->setEnabled(false);
-		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_center_freq->setEnabled(false);
+		ui->le_n9918a_span_freq->setEnabled(false);
 		ui->le_n9918a_sample->setEnabled(false);
         statusBar_status(Module::N9918a, "Connecting");
         break;
     case DevStatus::connected:
         ui->pb_n9918a_connect->setText(QStringLiteral("断开"));
 		ui->le_n9918a_ip->setEnabled(false);
-		ui->le_n9918a_start_freq->setEnabled(false);
-		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_center_freq->setEnabled(false);
+		ui->le_n9918a_span_freq->setEnabled(false);
 		ui->le_n9918a_sample->setEnabled(false);
         statusBar_status(Module::N9918a, "Connected");
         break;
@@ -311,7 +311,7 @@ void MainWindow::on_pb_start_mission_clicked() {
     connect(measure_mission, SIGNAL(status_changed(bool)), this, SLOT(on_mission_status_changed(bool)));
     connect(measure_mission, SIGNAL(process_changed(int)), this, SLOT(on_mission_process_changed(int)));
 
-    n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_start_freq->text(), ui->le_n9918a_stop_freq->text());
+    n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_center_freq->text(), ui->le_n9918a_span_freq->text());
 
     measure_mission->mission_start(file_full);
     ui->pb_start_mission->setText(QStringLiteral("开始任务"));
@@ -321,8 +321,8 @@ void MainWindow::on_mission_status_changed(bool busy) {
 	if (busy) {
 		ui->le_n9918a_ip->setEnabled(false);
 		ui->pb_n9918a_connect->setEnabled(false);
-		ui->le_n9918a_start_freq->setEnabled(false);
-		ui->le_n9918a_stop_freq->setEnabled(false);
+		ui->le_n9918a_center_freq->setEnabled(false);
+		ui->le_n9918a_span_freq->setEnabled(false);
 		ui->le_n9918a_sample->setEnabled(false);
 
 		ui->cb_polar_motor_com->setEnabled(false);
@@ -352,8 +352,8 @@ void MainWindow::on_mission_status_changed(bool busy) {
 	else {
 		ui->le_n9918a_ip->setEnabled(true);
 		ui->pb_n9918a_connect->setEnabled(true);
-		ui->le_n9918a_start_freq->setEnabled(true);
-		ui->le_n9918a_stop_freq->setEnabled(true);
+		ui->le_n9918a_center_freq->setEnabled(true);
+		ui->le_n9918a_span_freq->setEnabled(true);
 		ui->le_n9918a_sample->setEnabled(true);
 
 		ui->cb_polar_motor_com->setEnabled(true);

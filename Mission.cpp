@@ -280,7 +280,7 @@ bool Mission::create_folder(QString file_full) {
 	QString save_dir_name = QString("%1_%2_%3_%4")
 		.arg(filename)
 		.arg((type == MissonType::Polarization) ? "Polarization" : (type == MissonType::RadiationPattern) ? "RadiationPattern" : "RadiationPattern3D")
-		.arg(n9918a->start_freq).arg(n9918a->stop_freq);
+		.arg(n9918a->center_freq).arg(n9918a->span_freq);
 	QDir dir(QDir::cleanPath(filepath + QDir::separator() + save_dir_name));
 	qDebug() << dir.absolutePath();
 	if (dir.exists()) {

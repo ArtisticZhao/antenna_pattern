@@ -21,8 +21,8 @@ signals:
 
 public:
 	DevStatus deviceOK;
-	QString start_freq;
-	QString stop_freq;
+	QString center_freq;
+	QString span_freq;
 	N9918a();
 	~N9918a();
 	void connectToN9918a(QString ip_addr);
@@ -42,7 +42,7 @@ private:
 	int sample_points;
 
 	void send_cmd(const QString& cmd);
-	void generate_freq_linespace(QString sample_points, QString start_freq, QString stop_freq);  // 生成图像横坐标数据
+	void generate_freq_linespace(QString, double, double);  // 生成图像横坐标数据
 
 private slots:
 	void on_state_changed(QAbstractSocket::SocketState s);

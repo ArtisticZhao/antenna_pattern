@@ -23,6 +23,7 @@ public:
 	DevStatus deviceOK;
 	QString center_freq;
 	QString span_freq;
+	QString xaxis_str;
 	N9918a();
 	~N9918a();
 	void connectToN9918a(QString ip_addr);

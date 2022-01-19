@@ -333,7 +333,11 @@ bool Mission::create_result_file(QString filename) {
 	emit logging(LogLevel::Info, QString("Saving result to %1").arg(file_full));
 	// empty old data
 	save_data.clear();
-	save_data.append(QString("current angle, data(dBm)\n"));
+	auto header = QString("current angle");
+	header += ", ";
+	header += n9918a->xaxis_str;
+	header += "\n";
+	save_data.append(header);
 }
 
 void Mission::append_result(double current_angle, QString n9918_result) {

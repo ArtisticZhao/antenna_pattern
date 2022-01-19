@@ -51,6 +51,7 @@ QString N9918a::return_last_measure_data() {
 	return last_anser;
 }
 
+
 void N9918a::send_cmd(const QString& cmd) {
 	if (deviceOK != DevStatus::connected) {
 		emit logging(LogLevel::Error, QString("N9918A not ready! Last cmd: %1").arg(cmd));
@@ -77,6 +78,7 @@ void N9918a::send_cmd(const QString& cmd) {
 
 void N9918a::generate_freq_linespace(QString sample_points_str, double start_freq, double stop_freq) {
 	if (xaxis != nullptr) {
+		qDebug() << "delete xaxis";
 		delete xaxis;
 	}
 	qDebug() << "start freq, stop freq " << start_freq << stop_freq;
@@ -123,19 +125,21 @@ QLineSeries* N9918a::measure_power(double* power_max) {
 
 void N9918a::get_freq_linespace() {
 	if (xaxis != nullptr) {
+		qDebug() << "delete xaxis";
 		delete xaxis;
 	}
 	last_anser.clear();
 	measure_lock = true; // lock
 	measure_data_counter = 0;
 	send_cmd("TRACE:XVAL?");
-	qDebug() << last_anser;
+	xaxis_str = last_anser;
 	QStringList list = last_anser.split(",");
 	xaxis = new QVector<double>();
 	for (auto xdata : list)
 	{
 		xaxis->push_back(xdata.toDouble() / 1e6); // µ¥Î»Îª MHz
 	}
+	if (xaxis->size() == 0) return;
 	qDebug() << "x-trace start at: " << xaxis->at(0) << " MHz, end at: " << xaxis->back() << "MHz";
 }
 

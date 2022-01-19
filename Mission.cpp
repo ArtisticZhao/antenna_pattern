@@ -53,8 +53,11 @@ void Mission::mission_start(QString file_full) {
 	emit status_changed(true);  // signed start
 	// generate rotator angle vector to iteration
 	std::vector<double> rotator_v(double_inc_iterator(rotator_start, rotator_step), double_inc_iterator(rotator_stop));
+	if (rotator_stop != rotator_v.back()) rotator_v.push_back(rotator_stop);  // 强行包含右边界
 	// generate polar motor angle vector to iteration
 	std::vector<double> polar_v(double_inc_iterator(polar_start, polar_step), double_inc_iterator(polar_stop));
+	if (polar_stop != polar_v.back()) polar_v.push_back(polar_stop);  // 强行包含右边界
+
 	double inner_angle, outter_angle;
 
 	// pre-config is not valid, measure once.

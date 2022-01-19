@@ -141,6 +141,7 @@ void Mission::mission_start(QString file_full) {
 			emit status_changed(false);
 			return;
 		}
+		QApplication::beep();  // 结束提示音
 	} else {
 		// 两个电机联动
 		outter_motor->turn_to_zero();
@@ -152,6 +153,7 @@ void Mission::mission_start(QString file_full) {
 				return;
 			}
 		}
+		QApplication::beep();  // 结束提示音
 	}
 
 	emit status_changed(false);
@@ -191,7 +193,10 @@ void Mission::measure_single_loop(std::vector<double>* innerloop, MotorCtrl* inn
 		append_result(inner_angle, n9918a->return_last_measure_data());
 		mission_count++;
 		emit process_changed(mission_count * 100 / mission_num);  //update process.
-		if (stop_signal) return;
+		if (stop_signal) {
+			save_result_to_file();  // 提前结束时保存到文件,以释放文件资源
+			return;
+		}
 	}
 	//if (innerloop->at(0) == 0 && innerloop->back() == 360) {
 	//	draw_pattern_add_point(360, pattern_data->at(0).y());  // 封闭图形

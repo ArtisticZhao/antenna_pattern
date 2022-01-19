@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(rotator, SIGNAL(update_angle(double, double)), this, SLOT(on_rotator_angle_updated(double, double)));
     connect(rotator, SIGNAL(logging(LogLevel, QString)), this, SLOT(on_logging(LogLevel, QString)));
 
-	
+    
 }
 
 MainWindow::~MainWindow()

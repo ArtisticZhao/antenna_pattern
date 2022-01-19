@@ -80,11 +80,17 @@ bool Rotator::turn_to(double azimuth) {
 	emit logging(LogLevel::Info, QString("turn to the position! %1\n").arg(current_azimuth));
 	return true;
 }
+//
+//void Rotator::set_pitch(double pitch) {
+//	RotatorProtocol rp;
+//	rp.set_target_angle(0, (int)(pitch * 100), RotatorProtocol::PITCH);
+//	send_cmd(rp.get_bitstring());
+//}
 
 bool Rotator::turn_pitch_to(double angle) {
 	emit logging(LogLevel::Info, QString("Rotator pitch set to %1").arg(angle));
 	RotatorProtocol rp;
-	rp.set_target_angle((int)(angle * 100), 0, RotatorProtocol::PITCH);
+	rp.set_target_angle(0, (int)(angle * 100), RotatorProtocol::PITCH);
 	bool res = send_cmd(rp.get_bitstring());
 	if (!res) return false;
 	

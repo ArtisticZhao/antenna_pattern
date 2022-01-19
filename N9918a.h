@@ -27,7 +27,7 @@ public:
 	~N9918a();
 	void connectToN9918a(QString ip_addr);
 	void disconnect();
-
+	
 	QLineSeries* measure_power(double* power_max);
 	void init(QString sample_points, QString start_freq, QString stop_freq);
 	QString return_last_measure_data();
@@ -43,7 +43,7 @@ private:
 
 	void send_cmd(const QString& cmd);
 	void generate_freq_linespace(QString, double, double);  // 生成图像横坐标数据
-
+	void get_freq_linespace();   // 从仪器中获取图像横坐标数据
 private slots:
 	void on_state_changed(QAbstractSocket::SocketState s);
 	void msg_callback(const char* msg, int count);

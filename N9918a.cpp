@@ -39,8 +39,11 @@ void N9918a::init(QString sample_points, QString center_freq, QString span_freq)
 	//send_cmd(QString("SENS:FREQ:STOP %1").arg(stop_freq));
 	send_cmd(QString("SENS:FREQ:CENT %1").arg(center_freq));
 	send_cmd(QString("SENS:FREQ:SPAN %1").arg(span_freq));
-	// generate x-axis
-	generate_freq_linespace(sample_points, center_f - span_f / 2, center_f + span_f / 2);
+	//// generate x-axis
+	//generate_freq_linespace(sample_points, center_f - span_f / 2, center_f + span_f / 2);
+
+	// query freq linespace from 9918
+	get_freq_linespace();
 	emit logging(LogLevel::Info, QString("N9918A set center freq at %1; span freq for %2; sample point is %3").arg(center_freq).arg(span_freq).arg(sample_points));
 }
 
@@ -116,6 +119,24 @@ QLineSeries* N9918a::measure_power(double* power_max) {
 	emit measure_updated(max, min, xaxis->at(max_index));
 	qDebug() << max << max_index;
 	return lineseries;
+}
+
+void N9918a::get_freq_linespace() {
+	if (xaxis != nullptr) {
+		delete xaxis;
+	}
+	last_anser.clear();
+	measure_lock = true; // lock
+	measure_data_counter = 0;
+	send_cmd("TRACE:XVAL?");
+	qDebug() << last_anser;
+	QStringList list = last_anser.split(",");
+	xaxis = new QVector<double>();
+	for (auto xdata : list)
+	{
+		xaxis->push_back(xdata.toDouble() / 1e6); // µ¥Î»Îª MHz
+	}
+	qDebug() << "x-trace start at: " << xaxis->at(0) << " MHz, end at: " << xaxis->back() << "MHz";
 }
 
 void N9918a::msg_callback(const char* msg, int count){

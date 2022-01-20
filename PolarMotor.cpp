@@ -163,7 +163,6 @@ void PolarMotor::read_data() {
 	if (dataLen <= 0) {
 		return;
 	}
-	qDebug() << data;
 	QString str = data;
 	QStringList  strs = str.split(" ");
 	if (strs.length() == 2) {

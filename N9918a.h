@@ -30,6 +30,7 @@ public:
 	void disconnect();
 	
 	QLineSeries* measure_power(double* power_max);
+	void set_continuous_on();   // 测量时会变为单次触发模式, 调用此函数恢复
 	void init(QString sample_points, QString start_freq, QString stop_freq);
 	QString return_last_measure_data();
 
@@ -43,7 +44,6 @@ private:
 	int sample_points;
 
 	void send_cmd(const QString& cmd);
-	void generate_freq_linespace(QString, double, double);  // 生成图像横坐标数据
 	void get_freq_linespace();   // 从仪器中获取图像横坐标数据
 private slots:
 	void on_state_changed(QAbstractSocket::SocketState s);

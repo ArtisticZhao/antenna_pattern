@@ -32,7 +32,7 @@ void N9918a::init(QString sample_points, QString center_freq, QString span_freq)
 	this->sample_points = sample_points.toInt();
 	send_cmd("*CLS");
 	send_cmd("*IDN?");
-	send_cmd("SYST:PRES;*OPC?");
+	// send_cmd("SYST:PRES;*OPC?");
 	send_cmd("INST:SEL 'SA';*OPC?");
 	send_cmd(QString("SENS:SWE:POIN %1").arg(sample_points));
 	//send_cmd(QString("SENS:FREQ:START %1").arg(start_freq));
@@ -76,20 +76,6 @@ void N9918a::send_cmd(const QString& cmd) {
 	}
 }
 
-void N9918a::generate_freq_linespace(QString sample_points_str, double start_freq, double stop_freq) {
-	if (xaxis != nullptr) {
-		qDebug() << "delete xaxis";
-		delete xaxis;
-	}
-	qDebug() << "start freq, stop freq " << start_freq << stop_freq;
-	int sample_points = sample_points_str.toInt();
-	xaxis = new QVector<double>();
-	double step_freq = (stop_freq - start_freq) / sample_points;
-	for (int i = 0; i < sample_points; i++) {
-		xaxis->push_back(start_freq + i * step_freq);
-	}
-}
-
 QLineSeries* N9918a::measure_power(double* power_max) {
 	send_cmd("INIT:CONT OFF;*OPC?");
 	send_cmd("INIT:IMM;*OPC?");
@@ -123,11 +109,23 @@ QLineSeries* N9918a::measure_power(double* power_max) {
 	return lineseries;
 }
 
+void N9918a::set_continuous_on() {
+	send_cmd("INIT:CONT ON;*OPC?");
+}
+
 void N9918a::get_freq_linespace() {
 	if (xaxis != nullptr) {
 		qDebug() << "delete xaxis";
 		delete xaxis;
 	}
+	// 获取频率范围之前需要先进行测量
+	send_cmd("INIT:CONT OFF;*OPC?");
+	send_cmd("INIT:IMM;*OPC?");
+	last_anser.clear();
+	measure_lock = true; // lock
+	measure_data_counter = 0;
+	send_cmd("TRACE:DATA?");
+
 	last_anser.clear();
 	measure_lock = true; // lock
 	measure_data_counter = 0;
@@ -140,7 +138,7 @@ void N9918a::get_freq_linespace() {
 		xaxis->push_back(xdata.toDouble() / 1e6); // 单位为 MHz
 	}
 	if (xaxis->size() == 0) return;
-	qDebug() << "x-trace start at: " << xaxis->at(0) << " MHz, end at: " << xaxis->back() << "MHz";
+	emit logging(LogLevel::Info, QString("x-trace start at: %1 MHz, end at: %2 MHz").arg(xaxis->at(0)).arg(xaxis->back()));
 }
 
 void N9918a::msg_callback(const char* msg, int count){

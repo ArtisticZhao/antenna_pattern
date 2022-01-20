@@ -126,7 +126,7 @@ void Mission::mission_start(QString file_full) {
 			mission_num = outterloop->size() * innerloop->size();
 		}
 	} else if (type == MissonType::RadiationPattern3D) {
-		 // 3d 方向图测量
+		// 3d 方向图测量
 		// 外循环是方位  内循环是俯仰
 		outterloop = &polar_v;
 		innerloop = &rotator_v;
@@ -144,21 +144,25 @@ void Mission::mission_start(QString file_full) {
 			emit status_changed(false);
 			return;
 		}
-		QApplication::beep();  // 结束提示音
 	} else {
 		// 两个电机联动
 		outter_motor->turn_to_zero();
 		foreach(outter_angle, *outterloop) {
-			outter_motor->turn_to(outter_angle);
+			for (int i=0; i<10; i++)
+			{
+
+				if (outter_motor->turn_to(outter_angle)) {
+					break;
+				}
+				qDebug() << "outter false, retry...";
+			}
 			measure_single_loop(innerloop, inner_motor, QString("%1%2").arg(save_filename).arg(QString::number(outter_angle)));
 			if (stop_signal) {
 				emit status_changed(false);
 				return;
 			}
 		}
-		QApplication::beep();  // 结束提示音
 	}
-
 	emit status_changed(false);
 }
 

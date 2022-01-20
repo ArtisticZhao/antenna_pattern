@@ -145,6 +145,8 @@ void MainWindow::on_n9918a_status_updated(DevStatus deviceOK) {
 		ui->le_n9918a_span_freq->setEnabled(false);
 		ui->le_n9918a_sample->setEnabled(false);
         statusBar_status(Module::N9918a, "Connected");
+        // 连接后初始化9918
+        n9918a->init(ui->le_n9918a_sample->text(), ui->le_n9918a_center_freq->text(), ui->le_n9918a_span_freq->text());
         break;
     default:
         break;
@@ -350,6 +352,7 @@ void MainWindow::on_mission_status_changed(bool busy) {
 		ui->le_rotator_preconfig_step_angle->setEnabled(false);
 	}
 	else {
+        // 任务结束
 		ui->le_n9918a_ip->setEnabled(true);
 		ui->pb_n9918a_connect->setEnabled(true);
 		ui->le_n9918a_center_freq->setEnabled(true);
@@ -379,6 +382,8 @@ void MainWindow::on_mission_status_changed(bool busy) {
 		ui->le_rotator_preconfig_start_angle->setEnabled(true);
 		ui->le_rotator_preconfig_stop_angle->setEnabled(true);
 		ui->le_rotator_preconfig_step_angle->setEnabled(true);
+        QApplication::beep();  // 结束提示音
+        n9918a->set_continuous_on();  // 任务结束后恢复连续触发模式
 	}
 }
 

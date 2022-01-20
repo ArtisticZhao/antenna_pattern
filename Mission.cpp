@@ -248,11 +248,25 @@ void Mission::draw_spectrum(QLineSeries* lineseries) {
 }
 
 void Mission::new_pattern() {
+	pattern_data = new QSplineSeries();  // Çå³ýÊý¾Ý
+
 	power_max = -9999999;
 	power_min = 9999999;
-	pattern_data->clear();
+
+	QChart* old = pattern->chart();
+	QChart* chart_pattern = new QPolarChart();
+	chart_pattern->legend()->hide();
+	chart_pattern->addSeries(pattern_data);
+	chart_pattern->createDefaultAxes();
+	// set axis range to 0 360
+	QList<QAbstractAxis*> axisList = chart_pattern->axes();
+	axisList.at(0)->setRange(0, 360);
+	
+	pattern->setChart(chart_pattern);
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
-	pattern->repaint();
+	if (old != nullptr) {
+		old->deleteLater();
+	}
 }
 
 void Mission::draw_pattern_add_point(double angle, double max_power) {
